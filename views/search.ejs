@@ -1,0 +1,92 @@
+<html>
+	<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+	<style rel="stylesheet">
+		body {
+			margin: 20px;
+		}
+		
+		.selector {
+			cursor: pointer;
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	<script type='text/javascript'>
+		function complete() {
+			var xhr = new XMLHttpRequest();
+			var url = "/search_query/?query="+ document.getElementById("search_input").value;
+			xhr.onreadystatechange=function() {
+			      if (xhr.readyState == 4 && xhr.status == 200) {
+			              	document.getElementById("suggest").innerHTML = "";
+			              	var suggestions = JSON.parse(xhr.responseText);
+			              	for (var i in suggestions) {
+			              		document.getElementById("suggest").innerHTML += "<div id='sug" + i + "' onClick='setSearch(" + i + ")' class='selector'>"+suggestions[i]+"</div>";
+			              	}
+			      }
+			}
+			xhr.open("GET", url, true);
+			xhr.send();
+		}
+		
+		function setSearch(id) {
+			var result = document.getElementById("sug"+id).innerHTML;
+			document.getElementById("search_input").value = result.slice(result.lastIndexOf("/")+1);
+			complete();
+		}
+		
+		function loadMovie() {
+			window.location="http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/goToMovie/?movie="+document.getElementById("suggest").childNodes[0].innerHTML;
+		}
+		
+	</script>
+	</head>
+	<body>
+		<ul class="nav nav-tabs">
+			<li role="presentation"><a href="/">Home</a></li>
+		        <li role="presentation"><a href="/browse/">Parcourir</a></li>
+		        <li role="presentation" class="active"><a href="/search/">Recherche</a></li>
+		</ul>
+                <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="modalcontent">
+                	<div class="modal-dialog modal-lg">
+                        	<div id="modalpopup" class="modal-content">
+                        		<div class="modal-header">
+                        		        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        		        <h4 class="modal-title" id="exampleModalLabel"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span><span style="margin-left: 10px">Warning</span></h4>
+                        		 </div>
+                        		 <div id="modalpopupcontent" style="margin:20px"></div>
+                        		 <div class="modal-footer" style="visibility: hidden" id="modal-footer">
+                        		         <button type="button" class="btn btn-default" data-dismiss="modal">Non</button>
+                        		         <button type="button" class="btn btn-primary" onClick="loadMovie()">Allons-y!!</button>
+                        		 </div>
+                        	</div>
+                  	</div>
+                </div>
+		<h1>Bienvenue sur DSKro<h1>
+		<h2>Recherche de contenus video</h2>
+		<div class="col-lg-6">
+			<div class="input-group">
+				<input id="search_input" type="text" class="form-control" placeholder="Search for..." onKeyUp="complete()">
+		                <span class="input-group-btn">
+				        <button class="btn btn-default" type="button" data-toggle="modal" data-target=".bs-example-modal-lg">Go!</button>
+		                </span>
+		        </div>
+		        <div id="suggest"></div>
+                </div>
+                <script type="text/javascript">
+		$('#modalcontent').on('show.bs.modal', function (event) {
+			if (document.getElementById("suggest").childNodes.length != 1) {
+				document.getElementById("modalpopupcontent").innerHTML="<div>Merci de selectionner une contenu</div>";
+				document.getElementById("modal-footer").style.visibility="hidden";
+			} else {
+				document.getElementById("modalpopupcontent").innerHTML="<div>Vous avez selectionn&eacute;: "+ document.getElementById("suggest").childNodes[0].innerHTML +"</div><div>Souhaitez-vous voir la fiche programme?</div>";
+				document.getElementById("modal-footer").style.visibility="inherit";
+			}
+		});
+		</script>
+	</body>
+</html>

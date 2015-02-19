@@ -1,0 +1,53 @@
+<html>
+	<head>
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+	<style rel="stylesheet" >
+		.spacer {
+			margin-left: 20px;
+		}
+		
+		body {
+			margin: 20px;
+		}
+		
+		a {
+			color: #1589ED;
+			padding: 5px;
+		}
+		a:hover {
+			border: 3px ridge #1589ED;
+			border-radius: 10px;
+		}
+	</style>
+	</head>
+	<body>	
+		<ul class="nav nav-tabs">
+			<li role="presentation"><a href="/">Home</a></li>
+			<li role="presentation" class="active"><a href="">Parcours</a></li>
+		        <% if (onRoot) { %><li role="presentation"><a href="/browse/">Racine</a></li> <% } %>
+			<li role="presentation"><a href="/search/">Recherche</a></li>
+		</ul>
+		<h1>Bienvenue sur DSKro</h1>
+		<div>Voici la liste des <%= dir.length %> contenus:</div>
+	<%
+		for (var i in dir) {
+		%>
+		<div>
+			<% if (dir[i].stats.isDirectory()) { %>
+			<span class="glyphicon glyphicon-folder-open"></span>
+			<% } else { %>
+			<span class="glyphicon glyphicon-film"></span>
+			<% } %>
+			<span class="spacer">&nbsp;</span>
+			<a href="./<%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) + (dir[i].stats.isDirectory()?"/":"") %>"><%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) %></a>
+		</div>
+		<%
+		}
+	%>
+	</body>
+</html>
+

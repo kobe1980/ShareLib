@@ -1,0 +1,153 @@
+<html>
+	<head>
+		<style>
+			#description {
+				width: 100%;
+				height: 100px;
+			}
+			
+			.marger {
+				margin-left: 20px;
+				margin-right: 20px;
+			}
+			
+			#view {
+				background-color: #123456;
+				color: white;
+			}
+			
+			.carrousel_img {
+				display: block;
+				margin-right: auto;
+				margin-left: auto;
+				vertical-align: middle;
+			}
+		
+			.description_item {
+				font: bold;
+				text-decoration: underline;
+			}
+			
+			body {
+				margin: 20px;
+			}
+		</style>
+		<!-- Bootstrap -->
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+		
+		<!- ----------------------- -->
+		<script type='text/javascript'>
+			
+			function loadVideo() {
+				window.open(window.location.href.replace('/browse/', '/video_player/'));
+			}
+		</script>
+	</head>
+	<body onLoad="init()">
+		<ul class="nav nav-tabs">
+			<li role="presentation"><a href="/">Home</a></li>
+		    	<li role="presentation" class="active"><a href="#">Serie</a></li>
+		    	<li role="presentation"><a href="/browse/">Racine</a></li>
+		    	<li role="presentation"><a href="/search/">Recherche</a></li>
+		</ul>
+		<div class="marger">
+			<h1><%= search_result['original_name'] %></h1>
+			<div>Nom du fichier: <%= filename %></div>
+		</div>
+		<% if (search_result['backdrop_path']) { %>
+		<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+		<!-- Indicators -->
+		<ol class="carousel-indicators">
+			<li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+		        <li data-target="#carousel-example-generic" data-slide-to="1"></li>
+		        <li data-target="#carousel-example-generic" data-slide-to="2"></li>
+		</ol>
+		<div id="myCarousel" class="carousel slide">
+			<!-- Wrapper for slides -->
+			<div class="carousel-inner" role="listbox" style="height: 500px">
+			 	<div class="item active">
+					<img src="<%= config['images']['base_url']+config['images']['backdrop_sizes'][1]+search_result['backdrop_path'] %>" class="carrousel_img" />
+			                <div class="carousel-caption">
+			                	backgrop moyen
+		                	</div>
+			        </div>
+			        <% if (season_infos) { %>
+			 	<div class="item">
+					<img src="<%= config['images']['base_url']+config['images']['backdrop_sizes'][0]+season_infos['poster_path'] %>" class="carrousel_img"/>
+			                <div class="carousel-caption">
+			                	episode still_path
+		                	</div>
+			        </div>
+			        <% } 
+			        for (var i in episode_infos.images.posters) {
+			        %>
+			 	<div class="item">
+					<img src="<%= config['images']['base_url']+config['images']['backdrop_sizes'][0]+episode_infos.images.posters[i].file_path %>" class="carrousel_img"/>
+			                <div class="carousel-caption">
+			                	episode still_path
+		                	</div>
+			        </div>
+			        <% } %>
+			</div>
+		                                                                                                
+			<!-- Controls -->
+			<a class="left carousel-control" href="#carousel-example-generic" role="button" data-slide="prev">
+			 	<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+			        <span class="sr-only">Previous</span>
+			</a>
+			<a class="right carousel-control" href="#carousel-example-generic" role="button" data-slide="next">
+				<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+		       		<span class="sr-only">Next</span>
+			</a>
+		</div>
+		<% } %>
+		<div class="marger">
+		<% if (search_result['media_type'] == 'tv') { %>
+			<h2>Pr&eacute;sentation de la s&eacute;rie</h2>
+			<% if (search_result['first_air_date']) { %>
+			<div>Premiere date de diffusion : <%= new Date(search_result['first_air_date']).getDate() + "/" + (new Date(search_result['first_air_date']).getMonth()+1) + "/" + new Date(search_result['first_air_date']).getFullYear() %></div>
+			<% } %>
+			<% var creators = "";
+			for (var i in serie_infos['created_by']) {
+				creators += serie_infos['created_by'][i].name+(i<serie_infos['created_by'].length-1?", ":".");
+			}
+			%>
+			<div id="creators"><span class="description_item">Cr&eacute;&eacute; par: </span><%= creators %></div>
+			<% var genres = "";
+			for (var i in serie_infos['genres']) {
+				genres += serie_infos['genres'][i].name+(i<serie_infos['genres'].length-1?", ":".");
+			}
+			%>
+			<div id="genres"><span class="description_item">Genres: </span><%= genres %></div><br />
+			<div id="description" ><%= serie_infos['overview'] %></div>
+			<% if (saison_episode && saison_episode[0]) { %>
+			<div><span class="description_item">Saison: </span><%= saison_episode[0] %></div>
+			<% }
+			 if (saison_episode && saison_episode[1]) { %>
+			<div><span class="description_item">Episode: </span><%= saison_episode[1] %></div>
+			<% } %>
+			<div id="episode_name"><span class="description_item">Nom de l'&eacute;pisode: </span><%= episode_infos['name'] %></div>
+			<div id="episode_description"><span class="description_item">R&eacute;sum&eacute; de l'&eacute;pisode: </span><%= episode_infos['overview'] %></div>
+			<br/>
+		<% } %>
+			<button class="btn btn-primary" onClick="loadVideo()">Voir</div>
+		</div>
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+		    
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+		<script>
+			!function ($) {
+		        	$(function(){
+			                // carousel demo
+		                	$('#myCarousel').carousel()
+		                })
+	                }(window.jQuery)
+		</script>
+	</body>
+</html>

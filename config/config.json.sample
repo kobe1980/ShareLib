@@ -1,0 +1,20 @@
+/**
+ * COMMENTS TO REMOVE 
+ * security_activated: active security or not
+ * security_class: security class to call on every request
+ * security_function: function to call on every request
+ * security_reject_function: function to call when security check is not validated
+ **/ 
+{
+	"server_external_address": "whatever.ddns.net",
+	"server_port": 8080,
+	"server_root_dir": "/volume1/Videos/",
+	"access_log": "./logs/access.log",
+	"security_activated": true,
+	"security_class": "digest",
+	"security_function": "getStatus",		
+	"security_reject_function": "rejectRequest",
+	"authentication_page": "authent.ejs",
+	"tmdb_key": "69aba1d2d792945cc40",
+	"tmdb_lang": "fr"
+}

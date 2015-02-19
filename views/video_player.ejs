@@ -1,0 +1,24 @@
+<html>
+	<head></head>
+	<body>
+		<% if (path.slice(path.lastIndexOf('.')+1) == 'mkv' || path.slice(path.lastIndexOf('.')+1) == 'avi') { %>
+		<object classid="clsid:67DABFBF-D0AB-41fa-9C46-CC0F21721616"
+			width="1280" height="740"
+		        codebase="http://go.divx.com/plugin/DivXBrowserPlugin.cab">
+			<param name="src" value="http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + path %>"/>
+		                 
+			<embed	id = "np_plugin"
+		        	type = "video/divx"
+				src = "http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + path %>"
+				autoplay = "true"
+				width = "1280"
+				height = "740"
+		                pluginspage="http://go.divx.com/plugin/download/">
+			</embed>
+		</object>
+		                                                         
+		<% } else { %>
+		<video width="1280" height="720" controls="controls" src="<%= path %>" autoplay />
+		<% } %>
+	</body>
+</html>
