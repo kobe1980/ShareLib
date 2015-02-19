@@ -4,7 +4,7 @@
 
 No Real dependencies, because every module is included
 
-Here is the modules list included
+Here is the list of modules included
 
 [tmdbv3] (https://github.com/kobe1980/node-tmdb.git)
 This version is a branch from 
