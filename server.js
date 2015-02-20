@@ -19,16 +19,6 @@ tmdb.configuration(function(err, config) {
 	tmdb_config = config;
 });
 
-server.routes = Array();
-server.addRoute = function(route, callback) {
-	route=encodeURI(route).replace(/[!'()*]/g, escape);
-	if (!require('utils').inArray(this.routes, route)) {
-	    	console.log(new Date() + " - Server => Adding dynamically a new route: "+route);
-		this.routes.push(route);
-		server.get(route, callback);
-	}
-}
-
 server.use(favicon(__dirname + "/img/favicon.ico"));
 
 server.get('*', function(req, res, next) {
@@ -56,23 +46,14 @@ server.get('/open_viacertif/', function (req, res) {
 	res.end("Access granted");
 });
 
-server.get('/browse/', function(req, res) {
+server.get('/browse/*', function(req, res) {
 	if (url.parse(req.url).pathname == '/browse') {
 		res.writeHead(302, {'Location': "/browse/"});
 		res.end();
 		return true;
 	}
-        readPathAndRespond(config.server_root_dir, res);
-});
-
-server.get('/goToMovie/', function(req, res) {
-	var params = querystring.parse(url.parse(req.url).query);
-	var newRoute = '/browse/'+params['movie'];
-	server.addRoute(newRoute, function(req, res) {
-		readPathAndRespond(config.server_root_dir+encodeURI(params['movie']), res);
-	});
-	res.writeHead(302, {'Location': newRoute});
-	res.end();
+	// req.url slice to the next char after /browse/
+        readPathAndRespond(config.server_root_dir + req.url.slice(8), res);
 });
 
 server.get('/tmdb_search/', function(req, res) {
@@ -145,6 +126,16 @@ server.get('/tmdb_sample/', function(req, res) {
 		res.end();
 	});
 });
+
+server.get('/video_player/*', function(req, res) {
+	console.log(new Date() + " - Server => deliverFile: " + req.url);
+	return res.render('video_player.ejs', {path: req.url.replace('/video_player/','/streaming/'),  server_config: config});
+});
+
+server.get('/streaming/*', function (req, res) {
+	var vidStreamer = require('vid-streamer');
+	vidStreamer(req, res);
+});
                                                                                                                 
 var readPathAndRespond = function (path, res) {
 	 path = decodeURI(path);
@@ -159,33 +150,17 @@ var readPathAndRespond = function (path, res) {
 	        		       		console.log(new Date() + " - Server => readdir: Error reading dir "+ path);
 	                		        res.end("Error Reading FS Content");
 		                	} else {
-		        	                for (var i in files) {
-		        	                	files[i] = {"path": (path.slice(config.server_root_dir.length)?path.slice(config.server_root_dir.length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
-		        	                }
-		                		var newRoute='/browse/'+(files[0].path.lastIndexOf("/")>0?files[0].path.slice(0,files[0].path.lastIndexOf("/")+1):"")+':path';
-						server.addRoute(newRoute, function(req, res) {
-							readPathAndRespond(config.server_root_dir+(files[0].path.lastIndexOf("/")>0?encodeURI(files[0].path.slice(0,files[0].path.lastIndexOf("/")+1)):"")+req.params.path, res);
-						});
+		        	               	for (var i in files) {
+		        	               		files[i] = {"path": (path.slice(config.server_root_dir.length)?path.slice(config.server_root_dir.length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
+		        	               	}
 		        	                res.render('browse.ejs', {dir: files, onRoot: (path!=config.server_root_dir), server_config: config});
 		                	}
 	 			});
 	 		} else if (stats.isFile()) {
-		                var streamingRoute='/streaming/'+path.replace(config.server_root_dir, "");
-		                var vidStreamer = require('vid-streamer');
-        	                server.addRoute(streamingRoute, vidStreamer);
-		                var playerRoute='/video_player/'+path.replace(config.server_root_dir, "");
-        	                server.addRoute(playerRoute, function(req, res) {
-	 				deliverFile(playerRoute, res);
-	 			});	
 				return renderMovie(res, path);
 	 		}
 	 	});
 	 } else sendNotFound(res);
-}
-
-var deliverFile = function(path, res) {
-	console.log(new Date() + " - Server => deliverFile: " + path);
-	return res.render('video_player.ejs', {path: path.replace('/video_player/','/streaming/'),  server_config: config});
 }
 
 var renderMovie = function (res, path) {
@@ -299,8 +274,9 @@ var renderSerie = function(serie_infos, season_infos, episode_images, res, searc
 }
 
 var sendNotFound = function(res) {
-	res.setHeader('Content-Type', 'text/plain');
-	res.status(404).send('Not Found');
+	res.status(404);
+	res.setHeader('Content-Type', 'text/html');
+	res.render('404error.ejs');
 	res.end();
 }
 
@@ -324,11 +300,8 @@ var accesslogToFile = function(log) {
 	}
 }
 
-/* Don't use it now cause it prevent dynamic browsing
- *
 server.use(function(req, res, next) {
 	sendNotFound(res);
 });
-*/
 
 server.listen(config.server_port);

@@ -40,7 +40,7 @@
 		}
 		
 		function loadMovie() {
-			window.location="http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/goToMovie/?movie="+document.getElementById("suggest").childNodes[0].innerHTML;
+			window.location="http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/browse/"+document.getElementById("suggest").childNodes[0].innerHTML;
 		}
 		
 	</script>
