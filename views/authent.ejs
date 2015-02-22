@@ -67,8 +67,8 @@
              
              function encryptAndSend(key, nonce, token) {
                 res = document.getElementById('resultat');
-             	key = CryptoJS.MD5(btoa(key)).toString(CryptoJS.enc.Base64);
-             	var sign=CryptoJS.HmacSHA1(url + ", " + nonce + ", " + token, key).toString(CryptoJS.enc.Base64);
+             	//key = CryptoJS.MD5(btoa(key)).toString(CryptoJS.enc.Base64);
+             	var sign=CryptoJS.HmacSHA1(url + ", " + nonce + ", " + token, btoa(key)).toString(CryptoJS.enc.Base64);
                 res.innerHTML="Fichier pris en compte";
                 var xhr2 = new XMLHttpRequest();
                 xhr2.open('GET', url, true);

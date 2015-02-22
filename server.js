@@ -313,6 +313,7 @@ var loadServer = function () {
 	});
 
 	server.listen(config.server_port);
+	console.log(new Date() + " - Server => configuration loaded.");
 }
 
 console.log(new Date() + " - Starting Server.");
