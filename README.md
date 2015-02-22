@@ -9,9 +9,8 @@ No Real dependencies, because every module is included
 
 Here is the list of modules included
 
-[tmdbv3] (https://github.com/kobe1980/node-tmdb.git)
-This version is a branch from 
-[tmdbv3] (https://github.com/raqqa/node-tmdb.git)
+My own version of [tmdbv3] (https://github.com/kobe1980/node-tmdb.git)
+This version is a branch from Raqqa [tmdbv3] (https://github.com/raqqa/node-tmdb.git)
 
 [express] (https://github.com/strongloop/express.git)
 
