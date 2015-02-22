@@ -1,5 +1,13 @@
 <html>
 	<head>
+		<!-- Bootstrap -->
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+		<!- ----------------------- -->
+		
 		<style>
 			#description {
 				width: 100%;
@@ -32,14 +40,6 @@
 				margin: 20px;
 			}
 		</style>
-		<!-- Bootstrap -->
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-		
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
-		
-		<!- ----------------------- -->
 		<script type='text/javascript'>
 			
 			function loadVideo() {
@@ -109,7 +109,11 @@
 		<% if (search_result['media_type'] == 'tv') { %>
 			<h2>Pr&eacute;sentation de la s&eacute;rie</h2>
 			<% if (search_result['first_air_date']) { %>
-			<div>Premiere date de diffusion : <%= new Date(search_result['first_air_date']).getDate() + "/" + (new Date(search_result['first_air_date']).getMonth()+1) + "/" + new Date(search_result['first_air_date']).getFullYear() %></div>
+			<div>Premiere date de diffusion : <%= (new Date(search_result['first_air_date']).getDate()<10? "0"+new Date(search_result['first_air_date']).getDate():new Date(search_result['first_air_date']).getDate())
+				+ "/" + 
+				((new Date(search_result['first_air_date']).getMonth()+1)<10? "0"+(new Date(search_result['first_air_date']).getMonth()+1):(new Date(search_result['first_air_date']).getMonth()+1))
+				+ "/" + 
+				new Date(search_result['first_air_date']).getFullYear() %></div>
 			<% } %>
 			<% var creators = "";
 			for (var i in serie_infos['created_by']) {

@@ -213,7 +213,7 @@ var loadServer = function () {
 		for (var i=0;i<word_list.length;i++) {
 			full_name += " " + word_list[i];
 		}
-		return res.render('movie.ejs', {search_result: {'original_name': "Unable to found " + full_name +" on TMDB"}, urls: null, saison_episode: null, filename: filename, server_config: config});
+		return res.render('movie.ejs', {search_result: {'original_name': "Unable to found " + full_name +" on TMDB"}, filename: filename, server_config: config});
 	}
 
 	var renderMovieCallback = function (res, search_result, filename) {
@@ -221,20 +221,28 @@ var loadServer = function () {
 		if (searchingResults[filename] && searchingResults[filename]['found'] || !(searchingResults[filename])) return false;
 		if (search_result) {
 	 		if (searchingResults[filename]) searchingResults[filename]['found'] = true;
-		 	var match_res = filename.match(/S[0-9]+E[0-9]+/g);
-		 	var urls;
-	 		if (match_res) {
-	 			var saison_episode =  match_res[0].match(/[0-9]+/g);
-		 		seriesInfos[filename] = new Array();
-		 		tmdb.tv.info(search_result['id'], function (err, serie_info) {
-	 				return renderSerie(serie_info, null, null, res, search_result, filename, saison_episode);
-	 			});
-		 		tmdb.tv.seasons_info(search_result['id'], saison_episode[0], function (err, season) {
-		 			return renderSerie(null, season, null, res, search_result, filename, saison_episode);
-	 			});
-	 			return true;
-		 	}
-			res.render('movie.ejs', {config: tmdb_config, search_result: search_result, filename: filename, saison_episode: null, server_config: config});
+	 		if (search_result['media_type'] == 'tv') {
+			 	var match_res = filename.match(/S[0-9]+E[0-9]+/g);
+			 	var urls;
+	 			if (match_res) {
+	 				var saison_episode =  match_res[0].match(/[0-9]+/g);
+		 			seriesInfos[filename] = new Array();
+		 			tmdb.tv.info(search_result['id'], function (err, serie_info) {
+	 					return renderSerie(serie_info, null, null, res, search_result, filename, saison_episode);
+		 			});
+			 		tmdb.tv.seasons_info(search_result['id'], saison_episode[0], function (err, season) {
+			 			return renderSerie(null, season, null, res, search_result, filename, saison_episode);
+	 				});
+	 				return true;
+	 			} else {
+	 				// render a serie with no episode/season info
+	 			}
+		 	} else {
+		 		tmdb.movie.info(search_result['id'], function (err, movie) {
+					return res.render('movie.ejs', {config: tmdb_config, search_result: search_result, movie: movie, filename: filename, server_config: config});
+				});
+				return true;
+			}
 		}
 		res.end();
 		return true;

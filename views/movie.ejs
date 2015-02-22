@@ -1,5 +1,13 @@
 <html>
 	<head>
+		<!-- Bootstrap -->
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+		
+		<!- ----------------------- -->
 		<style>
 			#description {
 				width: 100%;
@@ -28,24 +36,22 @@
 				text-decoration: underline;
 			}
 		</style>
-		<!-- Bootstrap -->
-		<!-- Latest compiled and minified CSS -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
-		
-		<!-- Optional theme -->
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
-		
-		<!- ----------------------- -->
 		<script type='text/javascript'>
 			
 			function loadVideo() {
-				window.open(window.location.href.replace('/browse/', '/get/'));
+				window.open(window.location.href.replace('/browse/', '/video_player/'));
 			}
 		</script>
 	</head>
-	<body onLoad="init()">
+	<body>
+		<ul class="nav nav-tabs">
+		 	<li role="presentation"><a href="/">Home</a></li>
+		        <li role="presentation" class="active"><a href="#">Film</a></li>
+		        <li role="presentation"><a href="/browse/">Racine</a></li>
+		        <li role="presentation"><a href="/search/">Recherche</a></li>
+		</ul>
 		<div class="marger">
-			<h1><%= search_result['original_name'] %></h1>
+			<h1><%= search_result['original_title']  %></h1>
 			<div>Nom du fichier: <%= filename %></div>
 		</div>
 		<% if (search_result['backdrop_path']) { %>
@@ -65,14 +71,12 @@
 			                	backgrop moyen
 		                	</div>
 			        </div>
-			        <% if (season_infos) { %>
 			 	<div class="item">
-					<img src="<%= config['images']['base_url']+config['images']['backdrop_sizes'][0]+season_infos['poster_path'] %>" class="carrousel_img"/>
+					<img src="<%= config['images']['base_url']+config['images']['poster_sizes'][3]+search_result['poster_path'] %>" class="carrousel_img" />
 			                <div class="carousel-caption">
-			                	episode still_path
+			                	backgrop moyen
 		                	</div>
 			        </div>
-			        <% } %>
 			</div>
 		                                                                                                
 			<!-- Controls -->
@@ -87,34 +91,31 @@
 		</div>
 		<% } %>
 		<div class="marger">
-		<% if (search_result['media_type'] == 'tv') { %>
+		<% if (search_result['media_type'] == 'movie') { %>
 			<h2>Pr&eacute;sentation de la s&eacute;rie</h2>
-			<% if (search_result['first_air_date']) { %>
-			<div>Premiere date de diffusion : <%= new Date(search_result['first_air_date']).getDate() + "/" + (new Date(search_result['first_air_date']).getMonth()+1) + "/" + new Date(search_result['first_air_date']).getFullYear() %></div>
+			<% if (search_result['release_date']) { %>
+			<div><span class="description_item">Date de sortie:</span> <%= 
+				(new Date(search_result['release_date']).getDate() < 10? "0"+new Date(search_result['release_date']).getDate():new Date(search_result['release_date']).getDate()) 
+				+ "/" + 
+				((new Date(search_result['release_date']).getMonth()+1)<10? "0"+(new Date(search_result['release_date']).getMonth()+1):(new Date(search_result['release_date']).getMonth()+1)) 
+				+ "/" + 
+				new Date(search_result['release_date']).getFullYear() %></div>
 			<% } %>
-			<% var creators = "";
-			for (var i in serie_infos['created_by']) {
-				creators += serie_infos['created_by'][i].name+(i<serie_infos['created_by'].length-1?", ":".");
-			}
-			%>
-			<div id="creators"><span class="description_item">Cr&eacute;&eacute; par: </span><%= creators %></div>
-			<% var genres = "";
-			for (var i in serie_infos['genres']) {
-				genres += serie_infos['genres'][i].name+(i<serie_infos['genres'].length-1?", ":".");
-			}
-			%>
-			<div id="genres"><span class="description_item">Genres: </span><%= genres %></div><br />
-			<div id="description" ><%= serie_infos['overview'] %></div>
-			<% if (saison_episode && saison_episode[0]) { %>
-			<div><span class="description_item">Saison: </span><%= saison_episode[0] %></div>
-			<% }
-			 if (saison_episode && saison_episode[1]) { %>
-			<div><span class="description_item">Episode: </span><%= saison_episode[1] %></div>
+			<% if (movie['budget']) { %>
+				<div><span class="description_item">Budget:</span> <%= movie['budget'] %>$</div>
 			<% } %>
-			<div id="episode_name"><span class="description_item">Nom de l'&eacute;pisode: </span><%= episode_infos['name'] %></div>
-			<div id="episode_description"><span class="description_item">R&eacute;sum&eacute; de l'&eacute;pisode: </span><%= episode_infos['overview'] %></div>
-			<br/>
+			<% if (movie['genres']) {
+			var genres = "";
+			for (var i in movie['genres']) {
+				genres += movie['genres'][i]["name"] + (i<movie['genres'].length-1?", ":".");
+			} %>
+			<div><span class="description_item">Genres:</span> <%= genres %></div>
+			<% } %>
+			<% if (movie['overview']) { %>
+			<div><span class="description_item">Description:</span> <%= movie['overview'] %></div>
+			<% } %>
 		<% } %>
+			<br />	
 			<button class="btn btn-primary" onClick="loadVideo()">Voir</div>
 		</div>
 		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
