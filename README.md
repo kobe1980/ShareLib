@@ -1,5 +1,8 @@
 # ShareLib
 
+The aim of this project is to build a mediacenter for synology's NAS.
+It allows you to browse your movie library and stream it in your lan and in the wan.
+
 ### Dependencies
 
 No Real dependencies, because every module is included
