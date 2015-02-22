@@ -31,4 +31,5 @@ build/Release
 config/config.json
 
 # Digest Private key
-node_modules/digest.key.json
+node_modules/digest/config/digest.key.json
+node_modules/digest/config/key.jpg

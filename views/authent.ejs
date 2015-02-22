@@ -18,6 +18,7 @@
         </style>
         <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/hmac-sha1.js" type="text/javascript"></script>
        	<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/components/enc-base64-min.js"></script>
+       	<script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/md5.js"></script>
         <script type="text/javascript">
             var url = "http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/open_viacertif/";
             function init() {
@@ -59,12 +60,14 @@
                     	res.style.visibility='inherit';
                         encryptAndSend(fr.result, nonce, token);
                     };
-                    fr.readAsText(file);
+                    if (file.type.match('image.*')) fr.readAsBinaryString(file); 
+                    else fr.readAsText(file);
                  };
              }
              
              function encryptAndSend(key, nonce, token) {
                 res = document.getElementById('resultat');
+             	key = CryptoJS.MD5(btoa(key)).toString(CryptoJS.enc.Base64);
              	var sign=CryptoJS.HmacSHA1(url + ", " + nonce + ", " + token, key).toString(CryptoJS.enc.Base64);
                 res.innerHTML="Fichier pris en compte";
                 var xhr2 = new XMLHttpRequest();
