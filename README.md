@@ -28,7 +28,7 @@ Install from github
 
 Then modify config/config.json to match your environment
 
-modify node_modules/digest.key.json to set your own key
+modify node_modules/digest/config/digest.key.json to set your own key or file
 
 run node server.js
 
