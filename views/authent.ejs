@@ -48,6 +48,7 @@
                 f.onchange = function() {
                     var file = f.files[0],
                     fr = new FileReader();
+                    var method = 0;
 
                     fr.onprogress = function() {
                         res.innerHTML = 'Chargement...';
@@ -57,16 +58,32 @@
                     };
                     fr.onload = function() {
                     	res.style.visibility='inherit';
-                        encryptAndSend(fr.result, nonce, token);
+                        encryptAndSend(fr.result, nonce, token, method);
                     };
-                    if (file.type.match('image.*')) fr.readAsBinaryString(file); 
+                    if (file.type.match('image.*')) {
+			if (navigator.userAgent.indexOf('MSIE')) {method=2;fr.readAsArrayBuffer(file);} 
+                    	else {method=1;fr.readAsBinaryString(file);}
+                    }
                     else fr.readAsText(file);
                  };
              }
              
-             function encryptAndSend(key, nonce, token) {
+             // method: 0 = text, 1 = binary, 2 = arrayBuffer
+             function encryptAndSend(key, nonce, token, method) {
                 res = document.getElementById('resultat');
-             	var sign=CryptoJS.HmacSHA1(url + ", " + nonce + ", " + token, btoa(key)).toString(CryptoJS.enc.Base64);
+                switch (method) {
+                case 1: 
+                	key = btoa(key);
+                	break;
+                case 2:
+                	var binary = "";
+                	var bytes = new Uint8Array(key);
+                	for (var i = 0; i < bytes.length; i++) {
+                		binary += String.fromCharCode(bytes[i]);
+                	}
+                	key = btoa(binary);
+                }
+             	var sign=CryptoJS.HmacSHA1(url + ", " + nonce + ", " + token, key).toString(CryptoJS.enc.Base64);
                 res.innerHTML="Fichier pris en compte";
                 var xhr2 = new XMLHttpRequest();
                 xhr2.open('GET', url, true);
