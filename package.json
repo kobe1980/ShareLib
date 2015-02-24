@@ -1,6 +1,6 @@
 {
 	"name": "sharelib",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "a secured mediacenter for Synology's NAS. Allow you to browse, have nice description from TMDB and share your contents",
 	"author": "kobe1980 <kobe1980@gmail.com>",
 	"dependencies": {
