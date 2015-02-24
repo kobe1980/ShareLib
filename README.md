@@ -22,14 +22,14 @@ This version is a branch from Raqqa [tmdbv3] (https://github.com/raqqa/node-tmdb
 
 [serve-favicon] (https://github.com/expressjs/serve-favicon.git)
 
+[sharelib-digest]
+
 ### Usage
 
 Install from github
 
 Then modify config/config.json to match your environment
 
-modify node_modules/digest/config/digest.key.json to set your own key or file
+modify node_modules/sharelib-digest/config/digest.key.json to set your own key or file
 
-run node server.js
-
-
+run node server.js or npm start

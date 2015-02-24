@@ -11,7 +11,7 @@
 	"server_root_dir": "/volume1/Videos/",
 	"access_log": "./logs/access.log",
 	"security_activated": true,
-	"security_class": "digest",
+	"security_class": "sharelib-digest",
 	"security_function": "getStatus",		
 	"security_reject_function": "rejectRequest",
 	"authentication_page": "authent.ejs",
