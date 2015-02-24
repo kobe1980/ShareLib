@@ -14,7 +14,7 @@ var loadServer = function () {
 		console.log("This server require a TMDB Key to work. If you need one, go to https://www.themoviedb.org/");
 		return;
 	}
-	var tmdb=require('tmdbv3').init(config["tmdb_key"], (config["tmdb_lang"]?config["tmdb_lang"]:"en"));
+	var tmdb=require('sharelib-tmdbv3').init(config["tmdb_key"], (config["tmdb_lang"]?config["tmdb_lang"]:"en"));
 	var tmdb_config;
 	tmdb.configuration(function(err, config) {
 		tmdb_config = config;
