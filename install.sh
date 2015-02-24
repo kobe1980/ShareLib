@@ -1,5 +1,5 @@
 #!/bin/sh
-tail -n 15 config/config.json.sample > config/config.json;
+tail -n 13 config/config.json.sample > config/config.json;
 rm config/config.json.sample;
 tail -n 4 node_modules/sharelib-digest/config/digest.key.json.sample > node_modules/sharelib-digest/config/digest.key.json;
 rm node_modules/sharelib-digest/config/digest.key.json.sample;
