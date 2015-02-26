@@ -26,7 +26,9 @@ This version is a branch from Raqqa [tmdbv3] (https://github.com/raqqa/node-tmdb
 
 ### Usage
 
-Install from github
+Install from github or via npm
+
+use install.sh to help you renaming the config files
 
 Then modify config/config.json to match your environment
 
