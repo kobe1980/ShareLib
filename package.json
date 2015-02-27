@@ -13,7 +13,7 @@
 		"vid-streamer": "1.0.0-alpha2",
 		"serve-favicon": "2.2.0",
 		"sharelib-digest": "0.1.3",
-		"sharelib-tmdbv3": "0.1.1"
+		"sharelib-tmdbv3": "0.1.2"
 	},
 	"scripts": {
 		"start": "node server.js"

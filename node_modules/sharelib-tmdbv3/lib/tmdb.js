@@ -1,4 +1,5 @@
 var request = require('request');
+var em = require('events').EventEmitter;
 String.prototype.format = function() {
     var content = this;
     for (var i=0; i < arguments.length; i++)
@@ -68,15 +69,18 @@ var tmdb = function(api_key, language) {
             		genre_movies:               this.base+'/genre/{0}/movies?page={0}&page={1}&api_key='+this.api_key+(this.language?'&language='+this.language:'')
 		};
 
+
 	this.configuration(function(err,res) {
 		if(!err) {
 			me.config = res;
 		} else {
-			console.error('Error loading configuration: '+err);
+			me.emit('error', JSON.stringify(err));
 		}
 	});
 	
 };
+
+tmdb.prototype = Object.create(em.prototype);
 
 /**
  * factory function

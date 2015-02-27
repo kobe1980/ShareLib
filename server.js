@@ -17,6 +17,10 @@ var loadServer = function () {
 		return;
 	}
 	var tmdb=require('sharelib-tmdbv3').init(config["tmdb_key"], (config["tmdb_lang"]?config["tmdb_lang"]:"en"));
+	tmdb.on('error', function(msg) {
+		console.log(new Date() + " - Server => Error initializing TMDB: " + msg);
+		process.exit();
+	});
 	var tmdb_config;
 	tmdb.configuration(function(err, config) {
 		tmdb_config = config;
