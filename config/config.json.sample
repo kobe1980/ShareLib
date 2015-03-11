@@ -8,7 +8,10 @@
 {
 	"server_external_address": "whatever.ddns.net",
 	"server_port": 8080,
-	"server_root_dir": "/volume1/Videos/",
+	"server_root_dir": {
+		"video": "/volume1/Videos/",
+	        "audio": "/volume1/Musics/"
+	},
 	"access_log": "./logs/access.log",
 	"security_activated": true,
 	"security_class": "sharelib-digest",
@@ -16,5 +19,6 @@
 	"security_reject_function": "rejectRequest",
 	"authentication_page": "authent.ejs",
 	"tmdb_key": "69aba1d2d792945cc40",
+	"vid_streamer_path": "./config/vid-streamer.json",
 	"tmdb_lang": "fr"
 }

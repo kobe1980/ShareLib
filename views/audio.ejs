@@ -1,0 +1,76 @@
+<html>
+	<head>
+		<!-- Bootstrap -->
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+		
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+		
+		<!- ----------------------- -->
+		<style>
+			#description {
+				width: 100%;
+				height: 100px;
+			}
+			
+			.marger {
+				margin-left: 20px;
+				margin-right: 20px;
+			}
+			
+			#view {
+				background-color: #123456;
+				color: white;
+			}
+			
+			.carrousel_img {
+				display: block;
+				margin-right: auto;
+				margin-left: auto;
+				vertical-align: middle;
+			}
+		
+			.description_item {
+				font: bold;
+				text-decoration: underline;
+			}
+			
+			body {
+				margin: 20px;
+			}
+		</style>
+		<script type='text/javascript'>
+			
+		</script>
+	</head>
+	<body>
+		<ul class="nav nav-tabs">
+		 	<li role="presentation"><a href="/">Home</a></li>
+		        <li role="presentation" class="active"><a href="#">Music</a></li>
+		        <li role="presentation"><a href="/browse/audio/">Racine</a></li>
+		        <li role="presentation"><a href="/search/">Recherche</a></li>
+		</ul>
+		<div class="marger">
+			<h1><%= filename %></h1>
+		</div>
+		<audio controls>
+			<source src="http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + path%>" type="audio/mpeg">
+		Your browser does not support audio element.
+		</audio>
+		</div>
+		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+		    
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+		<script>
+			!function ($) {
+		        	$(function(){
+			                // carousel demo
+		                	$('#myCarousel').carousel()
+		                })
+	                }(window.jQuery)
+		</script>
+	</body>
+</html>

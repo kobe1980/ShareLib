@@ -59,7 +59,9 @@ var loadServer = function () {
 			return true;
 		}
 		// req.url slice to the next char after /browse/
-	        readPathAndRespond(config.server_root_dir + req.url.slice(8), res);
+		var path = req.url.slice(8);
+		var media_type = path.split("/")[0];
+	        readPathAndRespond(config.server_root_dir[media_type] + path.slice(media_type.length+1), media_type, res);
 	});
 
 	server.get('/tmdb_search/', function(req, res) {
@@ -108,10 +110,10 @@ var loadServer = function () {
 	server.get('/search_query/', function (req, res) {
 		var params = querystring.parse(url.parse(req.url).query);
 		var exec = require('child_process').exec;
-		var child = exec("find " + config.server_root_dir + " -name \"" + params['query']+"*\"", function (error, stdout, stderr) {
+		var child = exec("find " + config.server_root_dir['video'] + " -name \"" + params['query']+"*\"", function (error, stdout, stderr) {
 			if (error == null) {
 				res.writeHead(200, {'Content-type': 'application/json'});
-				res.end('["' + stdout.replace(/\n/g, '","').substring(0,stdout.length-1).replace(new RegExp(config.server_root_dir,"g"), "") + '"]');
+				res.end('["' + stdout.replace(/\n/g, '","').substring(0,stdout.length-1).replace(new RegExp(config.server_root_dir['video'],"g"), "") + '"]');
 			} else {
 				console.log(new Date() + " - Server => Search: Error" + error);
 			}
@@ -135,17 +137,24 @@ var loadServer = function () {
 
 	server.get('/video_player/*', function(req, res) {
 		console.log(new Date() + " - Server => deliverFile: " + req.url);
-		return res.render('video_player.ejs', {path: req.url.replace('/video_player/','/streaming/'),  server_config: config});
+		return res.render('video_player.ejs', {path: req.url.replace('/video_player/','/streaming/video/'),  server_config: config});
+	});
+
+	server.get('/audio_player/*', function(req, res) {
+		console.log(new Date() + " - Server => deliverFile: " + req.url);
 	});
 
 	server.get('/streaming/*', function (req, res) {
+		var media_type = req.url.split("/")[2];
+		req.url = req.url.replace(media_type+"/", "");
 		var vidStreamer = require('vid-streamer');
-		vidStreamer(req, res);
+		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type);
 	});
                                                                                                                 
-	var readPathAndRespond = function (path, res) {
+	var readPathAndRespond = function (path, media_type, res) {
 		 path = decodeURI(path);
-		 console.log (new Date() + " - Server => Entering readPathAndRespond: path= "+path);
+		 console.log (new Date() + " - Server => Entering readPathAndRespond: path= "+path+" media_type= "+media_type);
+		 if (media_type != "video" && media_type != "audio") return sendNotFound(res);
 		 var fs = require('fs');
 		 if (fs.existsSync(path)) {
         	 	res.setHeader('Content-Type', 'text/html');
@@ -157,19 +166,20 @@ var loadServer = function () {
 		                		        res.end("Error Reading FS Content");
 			                	} else {
 			        	               	for (var i in files) {
-		        		               		files[i] = {"path": (path.slice(config.server_root_dir.length)?path.slice(config.server_root_dir.length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
+		        		               		files[i] = {"path": (path.slice(config.server_root_dir[media_type].length)?path.slice(config.server_root_dir['video'].length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
 		        		               	}
-		        	        	        res.render('browse.ejs', {dir: files, onRoot: (path!=config.server_root_dir), server_config: config});
+		        	        	        res.render('browse.ejs', {dir: files, onRoot: (path!=config.server_root_dir[media_type]), server_config: config, media_type: media_type});
 			                	}
 		 			});
 	 			} else if (stats.isFile()) {
-					return renderMovie(res, path);
+					if (media_type == "video") return renderMovie(res, path);
+					if (media_type == "audio") return renderAudio(res, path);
 		 		}
 		 	});
 		 } else sendNotFound(res);
 	}
 
-	var renderMovie = function (res, path) {
+	var renderMovie = function(res, path) {
 		var filename = (path.lastIndexOf("/")>0?path.slice(path.lastIndexOf("/")+1):path);
 		console.log(new Date() + " - Server => renderMovie: trying to find " + filename + " on TMDB");
 		searchingResults[filename]=Array();
@@ -180,6 +190,12 @@ var loadServer = function () {
 		for (var i=words.length;i>0;i--) {	
 			TMDB_SEARCH(filename, words, i, res);
 		}
+	}
+	
+	var renderAudio = function(res, path) {
+		var filename = (path.lastIndexOf("/")>0?path.slice(path.lastIndexOf("/")+1):path);
+                console.log(new Date() + " - Server => renderAudio: rendering " + filename);
+                res.render('audio.ejs', {path: path.replace(config.server_root_dir['audio'], '/streaming/audio/'), filename: filename, server_config: config});
 	}
 
 	var TMDB_SEARCH = function(filename, word_list, nbWord, res) {

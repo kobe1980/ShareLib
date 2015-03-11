@@ -27,7 +27,8 @@
 	<body>	
 		<ul class="nav nav-tabs">
 			<li role="presentation"><a href="/">Home</a></li>
-			<li role="presentation" class="active"><a href="">Parcours</a></li>
+			<li role="presentation" <% if (media_type == "video") { %> class="active"<% } %>><a href="<% if (media_type != "video") { %>/browse/video/<%} %>"><% if (media_type == "video") { %>Parcours: Videos<% } else { %>Parcourir: Videos<% } %></a></li>
+			<li role="presentation" <% if (media_type == "audio") { %> class="active"<% } %>><a href="<% if (media_type != "audio") { %>/browse/audio/<%} %>"><% if (media_type == "audio") { %>Parcours: Musics<% } else { %>Parcourir: Musics<% } %></a></li>
 		        <% if (onRoot) { %><li role="presentation"><a href="/browse/">Racine</a></li> <% } %>
 			<li role="presentation"><a href="/search/">Recherche</a></li>
 		</ul>
@@ -39,8 +40,10 @@
 		<div>
 			<% if (dir[i].stats.isDirectory()) { %>
 			<span class="glyphicon glyphicon-folder-open"></span>
-			<% } else { %>
+			<% } else if (media_type == "video") { %>
 			<span class="glyphicon glyphicon-film"></span>
+			<% } else if (media_type == "audio") { %>
+			<span class="glyphicon glyphicon-music"></span>
 			<% } %>
 			<span class="spacer">&nbsp;</span>
 			<a href="./<%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) + (dir[i].stats.isDirectory()?"/":"") %>"><%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) %></a>
