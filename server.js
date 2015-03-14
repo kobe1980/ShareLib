@@ -9,6 +9,8 @@ var accesslog = require('access-log');
 var server = express();
 var seriesInfos = Array();
 var searchingResults = Array();
+var playlists = Array();
+var jspf = require('jspf');
 
 var loadServer = function () {
 	console.log(new Date() + " - Server: loading server configuration");
@@ -150,6 +152,39 @@ var loadServer = function () {
 		var vidStreamer = require('vid-streamer');
 		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type);
 	});
+	
+	server.get('/getCurrentPlaylist/', function(req, res) {
+		console.log(new Date() + " - Server => getCurrentPlaylist ");
+		res.status(200);
+		res.setHeader('Content-type', 'application/json');
+		if (playlists[req.connection.remoteAddress] != null) res.write(playlists[req.connection.remoteAddress].toString());
+		res.end();
+	});
+	
+	server.get('/addToPlaylist/', function(req, res) {
+		var params = querystring.parse(url.parse(req.url).query);
+		console.log(new Date() + " - Server => addToPlaylist: " + params['location']);
+		if (!playlists[req.connection.remoteAddress]) playlists[req.connection.remoteAddress] = new jspf.Jspf();
+		var t = new jspf.Track();
+		t.setLocation(params['location']);
+		playlists[req.connection.remoteAddress].pushTrack(t);
+		res.status(200);
+		res.setHeader('Content-type', 'application/json');
+		res.write(playlists[req.connection.remoteAddress].toString());
+		res.end();
+	});
+	
+	server.get('/removeFromPlaylist/', function(req, res) {
+		var params = querystring.parse(url.parse(req.url).query);
+                console.log(new Date() + " - Server => removeFromPlaylist: " + params['location']);
+		var t = new jspf.Track();
+		t.setLocation(params['location']);
+		playlists[req.connection.remoteAddress].removeTrack(t);
+		res.status(200);
+		res.setHeader('Content-type', 'application/json');
+		res.write(playlists[req.connection.remoteAddress].toString());
+		res.end();
+	});
                                                                                                                 
 	var readPathAndRespond = function (path, media_type, res) {
 		 path = decodeURI(path);
@@ -166,7 +201,7 @@ var loadServer = function () {
 		                		        res.end("Error Reading FS Content");
 			                	} else {
 			        	               	for (var i in files) {
-		        		               		files[i] = {"path": (path.slice(config.server_root_dir[media_type].length)?path.slice(config.server_root_dir['video'].length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
+		        		               		files[i] = {"path": (path.slice(config.server_root_dir[media_type].length)?path.slice(config.server_root_dir[media_type].length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
 		        		               	}
 		        	        	        res.render('browse.ejs', {dir: files, onRoot: (path!=config.server_root_dir[media_type]), server_config: config, media_type: media_type});
 			                	}
