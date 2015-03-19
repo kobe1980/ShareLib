@@ -107,7 +107,7 @@
 		<script type='text/javascript'>
 			var sources=[
 			<% 	for (var i in playlist.track) { %> 
-				"http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + "/streaming/audio/" + decodeURIComponent(playlist.track[i].location) %>"<%= (i<playlist.track.length-1?",":"") %>
+				"http://<%- server_config["server_external_address"]+":"+server_config["server_port"] + "/streaming/audio/" + decodeURIComponent(playlist.track[i].location) %>"<%= (i<playlist.track.length-1?",":"") %>
 			<% } %>
 			];
 			var currentSong = 0;
@@ -128,7 +128,7 @@
 			
 			function playPause() {
 				if (!player.src || stopped) {
-					player.src=sources[0].replace("&amp;","&");
+					player.src=sources[0];
 					stopped = false;
 					currentSong = 0;
 					document.getElementById("playlist_item_0").className="item_selected";
@@ -150,7 +150,7 @@
 					document.getElementById("playlist_item_"+currentSong).className="item_unselected";
 					currentSong--;
 					document.getElementById("playlist_item_"+currentSong).className="item_selected";
-					player.src=sources[currentSong].replace("&amp;","&");
+					player.src=sources[currentSong];
 					player.play();
 					document.getElementById("play_pause").src="/views/img/pause.png";
 				}
@@ -161,7 +161,7 @@
 					document.getElementById("playlist_item_"+currentSong).className="item_unselected";
 					currentSong++;
 					document.getElementById("playlist_item_"+currentSong).className="item_selected";
-					player.src=sources[currentSong].replace("&amp;","&");
+					player.src=sources[currentSong];
 					player.play();
 					document.getElementById("play_pause").src="/views/img/pause.png";
 				} else if (loop) {
@@ -215,7 +215,7 @@
 			function changeSong(i) {
 				document.getElementById("playlist_item_"+currentSong).className="item_unselected";
 				currentSong = i;
-				player.src=sources[currentSong].replace("&amp;","&");
+				player.src=sources[currentSong];
 				player.play();
 				if (stopped) stopped = false;
 				document.getElementById("playlist_item_"+currentSong).className="item_selected";
