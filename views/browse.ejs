@@ -74,7 +74,7 @@
 			<li role="presentation" <% if (media_type == "video") { %> class="active"<% } %>><a href="<% if (media_type != "video") { %>/browse/video/<%} %>"><% if (media_type == "video") { %>Parcours: Videos<% } else { %>Parcourir: Videos<% } %></a></li>
 			<li role="presentation" <% if (media_type == "audio") { %> class="active"<% } %>><a href="<% if (media_type != "audio") { %>/browse/audio/<%} %>"><% if (media_type == "audio") { %>Parcours: Musics<% } else { %>Parcourir: Musics<% } %></a></li>
 		        <% if (onRoot) { %><li role="presentation"><a href="/browse/<%= media_type %>/">Racine</a></li> <% } %>
-			<li role="presentation"><a href="/search/">Recherche</a></li>
+			<li role="presentation"><a href="/search/<%= media_type%>/">Recherche</a></li>
 		</ul>
 		<h1>Bienvenue sur DSKro</h1>
 		<% if (media_type == "audio") { %>

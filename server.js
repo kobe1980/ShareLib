@@ -143,21 +143,27 @@ var loadServer = function () {
 		}
 	});
 
-	server.get('/search_query/', function (req, res) {
+	server.get('/search_query/*', function (req, res) {
+		// req.url slice to the next char after /search_query/
+		var path = req.url.slice(14);
+		var media_type = path.split("/")[0];
 		var params = querystring.parse(url.parse(req.url).query);
 		var exec = require('child_process').exec;
-		var child = exec("find " + config.server_root_dir['video'] + " -name \"" + params['query']+"*\"", function (error, stdout, stderr) {
+		var child = exec("find " + config.server_root_dir[media_type] + " -name \"" + params['query']+"*\"", function (error, stdout, stderr) {
 			if (error == null) {
 				res.writeHead(200, {'Content-type': 'application/json'});
-				res.end('["' + stdout.replace(/\n/g, '","').substring(0,stdout.length-1).replace(new RegExp(config.server_root_dir['video'],"g"), "") + '"]');
+				res.end('["' + stdout.replace(/\n/g, '","').substring(0,stdout.length-1).replace(new RegExp(config.server_root_dir[media_type],"g"), "") + '"]');
 			} else {
 				console.log(new Date() + " - Server => Search: Error" + error);
 			}
 		});
 	});
 
-	server.get('/search/', function (req, res) {
-		res.render('search.ejs',  {server_config: config});
+	server.get('/search/*', function (req, res) {
+		// req.url slice to the next char after /search/
+		var path = req.url.slice(8);
+		var media_type = path.split("/")[0];
+		res.render('search.ejs',  {media_type: media_type, server_config: config});
 	});
 
 	server.get('/tmdb_sample/', function(req, res) {
@@ -185,7 +191,7 @@ var loadServer = function () {
 	server.get('/streaming/*', function (req, res) {
 		var media_type = req.url.split("/")[2];
 		req.url = req.url.replace(media_type+"/", "");
-		var vidStreamer = require('vid-streamer');
+		var vidStreamer = require('sharelib-streamer');
 		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type);
 	});
 	

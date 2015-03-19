@@ -19,7 +19,7 @@
 	<script type='text/javascript'>
 		function complete() {
 			var xhr = new XMLHttpRequest();
-			var url = "/search_query/?query="+ document.getElementById("search_input").value;
+			var url = "/search_query/<%= media_type%>/?query="+ document.getElementById("search_input").value;
 			xhr.onreadystatechange=function() {
 			      if (xhr.readyState == 4 && xhr.status == 200) {
 			              	document.getElementById("suggest").innerHTML = "";
@@ -35,12 +35,13 @@
 		
 		function setSearch(id) {
 			var result = document.getElementById("sug"+id).innerHTML;
+			document.getElementById("suggest").innerHTML="<div id='sug0' onClick='setSearch(0) class='selector'>"+result+"</div>";
 			document.getElementById("search_input").value = result.slice(result.lastIndexOf("/")+1);
-			complete();
+			//complete();
 		}
 		
 		function loadMovie() {
-			window.location="http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/browse/"+document.getElementById("suggest").childNodes[0].innerHTML;
+			window.location="http://<%= server_config["server_external_address"] %>:<%= server_config["server_port"] %>/browse/<%= media_type %>/"+document.getElementById("suggest").childNodes[0].innerHTML;
 		}
 		
 	</script>
@@ -48,8 +49,8 @@
 	<body>
 		<ul class="nav nav-tabs">
 			<li role="presentation"><a href="/">Home</a></li>
-		        <li role="presentation"><a href="/browse/">Parcourir</a></li>
-		        <li role="presentation" class="active"><a href="/search/">Recherche</a></li>
+		        <li role="presentation"><a href="/browse/<%= media_type %>/">Parcourir</a></li>
+		        <li role="presentation" class="active"><a href="/search/<%= media_type %>/">Recherche</a></li>
 		</ul>
                 <div class="modal fade bs-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true" id="modalcontent">
                 	<div class="modal-dialog modal-lg">
@@ -67,7 +68,7 @@
                   	</div>
                 </div>
 		<h1>Bienvenue sur DSKro<h1>
-		<h2>Recherche de contenus video</h2>
+		<h2>Recherche de contenus <%= media_type%></h2>
 		<div class="col-lg-6">
 			<div class="input-group">
 				<input id="search_input" type="text" class="form-control" placeholder="Search for..." onKeyUp="complete()">
@@ -80,10 +81,10 @@
                 <script type="text/javascript">
 		$('#modalcontent').on('show.bs.modal', function (event) {
 			if (document.getElementById("suggest").childNodes.length != 1) {
-				document.getElementById("modalpopupcontent").innerHTML="<div>Merci de selectionner une contenu</div>";
+				document.getElementById("modalpopupcontent").innerHTML="<div>Merci de selectionner un contenu</div>";
 				document.getElementById("modal-footer").style.visibility="hidden";
 			} else {
-				document.getElementById("modalpopupcontent").innerHTML="<div>Vous avez selectionn&eacute;: "+ document.getElementById("suggest").childNodes[0].innerHTML +"</div><div>Souhaitez-vous voir la fiche programme?</div>";
+				document.getElementById("modalpopupcontent").innerHTML="<div>Vous avez selectionn&eacute;: "+ document.getElementById("suggest").childNodes[0].innerHTML +"</div><div>Souhaitez-vous voir la fiche contenu?</div>";
 				document.getElementById("modal-footer").style.visibility="inherit";
 			}
 		});
