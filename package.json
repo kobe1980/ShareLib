@@ -1,6 +1,6 @@
 {
 	"name": "sharelib",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "a secured mediacenter for Synology's NAS. Allow you to browse, have nice description from TMDB and share your contents",
 	"author": "kobe1980 <kobe1980@gmail.com>",
 	"bin": {
@@ -14,7 +14,8 @@
 		"serve-favicon": "2.2.0",
 		"sharelib-digest": "0.1.3",
 		"sharelib-tmdbv3": "0.1.2",
-		"jspf": "0.0.3"
+		"jspf": "0.0.3",
+		"sharelib-streamer": "0.0.1"
 	},
 	"scripts": {
 		"start": "node server.js"
