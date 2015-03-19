@@ -39,12 +39,214 @@
 			body {
 				margin: 20px;
 			}
+			
+			<% if (false) { %>
+			#player {
+				display: none;
+			}
+			<% } %>
+			
+			.item_selected {
+				font-weight: bold;
+				color: #337AB7;
+			}
+			
+			.item_unselected {
+				font-weight: normal;
+				color: black;
+			}
+			
+			#duration {
+				margin-left: 5px;
+				color: white;
+			}
+			
+			#homemadeplayer {
+				background-image: -webkit-linear-gradient(top, #717171 0%, #000000 100%);
+				background-image:    -moz-linear-gradient(top, #717171 0%, #000000 100%);
+	                        background-image:     -ms-linear-gradient(top, #717171 0%, #000000 100%);
+	                        background-image:      -o-linear-gradient(top, #717171 0%, #000000 100%);
+	                        background-image:         linear-gradient(top, #717171 0%, #000000 100%);
+				width: 500px;
+				height: 100px;                                                                                                                                                                                                                                            
+			}
+			
+			#homemadeplayer_content {
+				margin-top: 20px;
+				margin-left: 20px;
+				margin-right: 20px;
+				padding-top: 20px;
+				padding-right: 10px;
+				padding-left: 20px;
+			}
+			
+			img {
+				width: 20px;
+				height: 20px;
+				margin-left: 15px;
+			}
+			
+			#button_panel {
+				margin-left: 70px;
+			}
+			
+			#volume {
+				background-color: white;
+				width: 100px;
+				height: 4px;
+				position: relative;
+				top: 8px;
+				left: 5px;
+			}
+			
+			#curpos {
+				left:40px;
+				opacity: 100;
+			}
 		</style>
 		<script type='text/javascript'>
+			var sources=[
+			<% 	for (var i in playlist.track) { %> 
+				"http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + "/streaming/audio/" + decodeURIComponent(playlist.track[i].location) %>"<%= (i<playlist.track.length-1?",":"") %>
+			<% } %>
+			];
+			var currentSong = 0;
+			var stopped=false;
+			var player;
+			var progressbar;
+			var loop = false;
+			var muted = false;
+			var saveVolume;
+			
+			function init() {
+				player = document.getElementById("player");
+				progressbar = document.getElementById("progressbar");
+				player.addEventListener("timeupdate", updateProgressBar);
+				player.addEventListener("ended", forward);
+				player.addEventListener("loadedmetadata", setDuration);
+			}
+			
+			function playPause() {
+				if (!player.src || stopped) {
+					player.src=sources[0].replace("&amp;","&");
+					stopped = false;
+					currentSong = 0;
+					document.getElementById("playlist_item_0").className="item_selected";
+				}
+				if (player.paused) {
+					player.play();
+					document.getElementById("play_pause").src="/views/img/pause.png";
+					document.getElementById("progressbar").className="progress-bar progress-bar-striped active";
+				}
+				else {
+					player.pause();
+					document.getElementById("play_pause").src="/views/img/play.png";
+					document.getElementById("progressbar").className="progress-bar progress-bar-striped";
+				}
+			}
+			
+			function rewind() {
+				if (currentSong > 0) {
+					document.getElementById("playlist_item_"+currentSong).className="item_unselected";
+					currentSong--;
+					document.getElementById("playlist_item_"+currentSong).className="item_selected";
+					player.src=sources[currentSong].replace("&amp;","&");
+					player.play();
+					document.getElementById("play_pause").src="/views/img/pause.png";
+				}
+			}
+			
+			function forward() {
+				if (currentSong < sources.length-1) {
+					document.getElementById("playlist_item_"+currentSong).className="item_unselected";
+					currentSong++;
+					document.getElementById("playlist_item_"+currentSong).className="item_selected";
+					player.src=sources[currentSong].replace("&amp;","&");
+					player.play();
+					document.getElementById("play_pause").src="/views/img/pause.png";
+				} else if (loop) {
+					stopped = true;
+					document.getElementById("playlist_item_"+currentSong).className="item_unselected";
+					playPause();
+				}
+			}
+			
+			function toggleLoop(el) {
+				loop = !loop;
+				if (loop) el.src="/views/img/loop_selected.png";
+				else el.src = "/views/img/loop.png";
+			}
+			
+			function stop() {
+				player.pause();
+				document.getElementById("playlist_item_"+currentSong).className="item_unselected";
+				stopped = true;
+				if (player.paused) document.getElementById("play_pause").src="/views/img/play.png";
+				player.currentTime=0;
+			}
+			
+			function setDuration() {
+				document.getElementById("duration").innerHTML=convertS2min(Math.round(player.duration));	
+			}
+			
+			function convertS2min(sec) {
+				var s = sec % 60;
+				var m = Math.floor(sec / 60);
+				return m+":"+(s<10?"0"+s:s);
+			}
+			
+			function updateProgressBar() {
+				var ratio = player.currentTime/player.duration;
+				progressbar.style.width=Math.round(ratio * 100)+"%";
+				// left of the progress bat + progression
+				document.getElementById("curpos").children[1].innerHTML=convertS2min(Math.round(player.currentTime));
+				document.getElementById("curpos").style.left=39+Math.floor(ratio * 400);
+			}
+			
+			function setPosition(event) {
+				// mouse position - body-margin - progressbar-margin - progressbar-padding
+				var curpos = event.clientX - 60;
+				var ratio = curpos / 400;
+				if (player.src != "") player.currentTime = Math.round(player.duration * ratio);
+				// left of the progress bat + progression
+				document.getElementById("curpos").style.left=40+Math.round(ratio * 400);
+			}
+			
+			function changeSong(i) {
+				document.getElementById("playlist_item_"+currentSong).className="item_unselected";
+				currentSong = i;
+				player.src=sources[currentSong].replace("&amp;","&");
+				player.play();
+				if (stopped) stopped = false;
+				document.getElementById("playlist_item_"+currentSong).className="item_selected";
+				document.getElementById("play_pause").src="/views/img/pause.png";
+			}
+			
+			function mute() {
+				if (!muted) {
+					savedVolume = player.volume;
+					setVolume(0.0);
+				}
+				else setVolume(savedVolume);
+				muted = !muted;
+			}
+			
+			function setVolume(volume) {
+				player.volume = volume;
+				document.getElementById("volume_progressbar").style.width=volume*100+"%";
+			}
+			
+			function setVolumeByClic(event) {
+				// mouse position - buttonbar.margin - (rewind.width+margin) - (play.width+margin) etc
+				var curpos = event.clientX - 305;
+				var ratio = curpos / 100;
+				player.volume = Math.round(10 * ratio)/10;
+				document.getElementById("volume_progressbar").style.width=ratio*100+"%";
+			}
 			
 		</script>
 	</head>
-	<body>
+	<body onload="init()">
 		<ul class="nav nav-tabs">
 		 	<li role="presentation"><a href="/">Home</a></li>
 		        <li role="presentation" class="active"><a href="#">Music</a></li>
@@ -52,13 +254,44 @@
 		        <li role="presentation"><a href="/search/">Recherche</a></li>
 		</ul>
 		<div class="marger">
-			<h1><%= filename %></h1>
+			<h1><%= playlist.title %></h1>
 		</div>
-		<audio controls>
-			<source src="http://<%= server_config["server_external_address"]+":"+server_config["server_port"] + path%>" type="audio/mpeg">
+		<audio id="player">
 		Your browser does not support audio element.
 		</audio>
+		<div id="homemadeplayer">
+			<div class="tooltip top" role="tooltip" id="curpos">
+				<div class="tooltip-arrow"></div>
+		    		<div class="tooltip-inner">
+		        		0:00
+		          	</div>
+		        </div>
+			<div id="homemadeplayer_content" style="display:flex;flex-direction:row">
+				<div class="progress" style="width:400px; height:10px; margin-top:5px" onmousedown="setPosition(event)">
+					<div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%" id="progressbar">
+		      				<span class="sr-only"></span>
+		        		</div>
+				</div>
+				<div id="duration">0:00</div>
+			</div>
+			<div id="button_panel" style="display: flex">
+				<img src="/views/img/rewind.png" onmousedown="rewind()" style="cursor:pointer"/>
+				<img src="/views/img/play.png" onmousedown="playPause()" id="play_pause" style="cursor:pointer"/>
+				<img src="/views/img/stop.png" onmousedown="stop()" style="cursor:pointer"/>
+				<img src="/views/img/forward.png" onmousedown="forward()" style="cursor:pointer"/>
+				<img src="/views/img/loop.png" onmousedown="toggleLoop(this)" style="cursor:pointer"/>
+				<img src="/views/img/son.png" onmousedown="mute()" style="cursor:pointer"/>
+				<span id="volume" class="progress" onmousedown="setVolumeByClic(event)" style="cursor:pointer">
+				  	<span class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%;" id="volume_progressbar">
+				      		<span class="sr-only">60% Complete</span>
+				        </span>
+				</span>
+			</div>
 		</div>
+		<br />
+		<% for (var i in playlist.track) { %>
+			<div id="playlist_item_<%= i %>" onmousedown="changeSong(<%= i %>)" style="cursor: pointer"><%= playlist.track[i].title %></div>
+		<% } %>
 		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 		    

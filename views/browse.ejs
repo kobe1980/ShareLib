@@ -24,27 +24,38 @@
 		}
 		
 		.playlist {
-			position: absolute;
+			position: fixed;
 			right: 20px;
 			top: 80px;
-			height: 50%;
 			width: 20%;
+		<% if (playlist == null || playlist.track.length == 0) { %>
 			display: none;
+		<% } %>
 			box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.5);
+		}
+		
+		.playlist_item {
+			white-space: nowrap;
+		  	overflow: hidden;
+			text-overflow: ellipsis;
 		}	
 	</style>
 	<script language="Javascript">
-		function init() {
+		
+		function addToPlaylist(input) {
+			document.getElementById('playlist_modal').style.display='inline';
+			document.getElementById('playlist_modal').style.opacity=100;
 			var xhr = new XMLHttpRequest();
-			var url = "/getCurrentPlaylist/";
+			var url = (input.checked?"/addToPlaylist/":"/removeFromPlaylist/")+"?location="+encodeURIComponent(input.value);
 			xhr.onreadystatechange=function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
 			        	var pl = JSON.parse(xhr.responseText);
+		        		document.getElementById("playlist_modal_content").innerHTML = "";
 			        	if (pl!=null && pl.track.length > 0) {
-				        	document.getElementById('playlist_modal').style.display='inline';
-	        	                        document.getElementById('playlist_modal').style.opacity=100;
-				        	document.getElementById("playlist_modal_content").innerHTML = JSON.stringify(pl);
-				        }
+			        		for (var i in pl.track) {
+							document.getElementById("playlist_modal_content").innerHTML += "<div class='playlist_item'><span class='glyphicon glyphicon-music'></span>&nbsp;"+decodeURI(pl.track[i].title)+"</div>";
+						}
+					}
 			        }
 			}
 			xhr.open("GET", url, true);
@@ -52,28 +63,17 @@
 			return true;
 		}
 		
-		function addToPlaylist(input) {
-			document.getElementById('playlist_modal').style.display='inline';
-			document.getElementById('playlist_modal').style.opacity=100;
-			var xhr = new XMLHttpRequest();
-			var url = (input.checked?"/addToPlaylist/":"/removeFromPlaylist/")+"?location="+input.value;
-			xhr.onreadystatechange=function() {
-				if (xhr.readyState == 4 && xhr.status == 200) {
-					document.getElementById("playlist_modal_content").innerHTML = xhr.responseText;
-			        }
-			}
-			xhr.open("GET", url, true);
-			xhr.send();
-			return true;
+		function play_playlist () {
+			window.location="<%= "http://"+server_config.server_external_address+":"+server_config.server_port+"/audio_player/"  %>";
 		}
 	</script>
 	</head>
-	<body onload="init()">	
+	<body>	
 		<ul class="nav nav-tabs">
 			<li role="presentation"><a href="/">Home</a></li>
 			<li role="presentation" <% if (media_type == "video") { %> class="active"<% } %>><a href="<% if (media_type != "video") { %>/browse/video/<%} %>"><% if (media_type == "video") { %>Parcours: Videos<% } else { %>Parcourir: Videos<% } %></a></li>
 			<li role="presentation" <% if (media_type == "audio") { %> class="active"<% } %>><a href="<% if (media_type != "audio") { %>/browse/audio/<%} %>"><% if (media_type == "audio") { %>Parcours: Musics<% } else { %>Parcourir: Musics<% } %></a></li>
-		        <% if (onRoot) { %><li role="presentation"><a href="/browse/">Racine</a></li> <% } %>
+		        <% if (onRoot) { %><li role="presentation"><a href="/browse/<%= media_type %>/">Racine</a></li> <% } %>
 			<li role="presentation"><a href="/search/">Recherche</a></li>
 		</ul>
 		<h1>Bienvenue sur DSKro</h1>
@@ -83,6 +83,28 @@
 		if (dir.length > 1) {%><h3>Voici la liste des <%= dir.length %> contenus:</h3>
 		<% } else if (dir.length == 1) { %><h3>Voici l'unique contenu trouv&eacute;:</h3>
 		<% }
+		if (onRoot) { 
+			var href =  "http://"+server_config.server_external_address+":"+server_config.server_port+"/browse/"+media_type+"/";
+			var splittedPath = dir[0].path.split("/");
+			for (var i=0; i<splittedPath.length-2;i++) {
+				href += splittedPath[i]+"/";
+			}
+		%>
+		<div>
+			<span class="glyphicon glyphicon-folder-open"></span>
+			<span class="spacer">&nbsp;</span>
+			<a href="<%= href %>">..</a>
+		</div>
+		<% }
+		var stringToParse = '{';
+		if (playlist != null) {
+			for (var i in playlist.track) {
+				stringToParse+='"'+playlist.track[i].location+'": true,';
+			}
+			stringToParse = stringToParse.slice(0,-1);
+		}
+		stringToParse += '}';
+		var playlistContent=JSON.parse(stringToParse);
 		for (var i in dir) {
 		%>
 		<div>
@@ -91,17 +113,24 @@
 			<% } else if (media_type == "video") { %>
 			<span class="glyphicon glyphicon-film"></span>
 			<% } else if (media_type == "audio") { %>
-			<input type="checkbox" autocomplete="off" name="playlist_item" value="<%= dir[i].path %>" onclick="addToPlaylist(this);"/>&nbsp;<span class="glyphicon glyphicon-music"></span>
+			<input type="checkbox" autocomplete="off" name="playlist_item" value="<%= dir[i].path %>" onclick="addToPlaylist(this);" <%if (playlistContent[dir[i].path]){%>checked<%}%>/>&nbsp;<span class="glyphicon glyphicon-music"></span>
 			<% } %>
 			<span class="spacer">&nbsp;</span>
-			<a href="./<%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) + (dir[i].stats.isDirectory()?"/":"") %>"><%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) %></a>
+			<a href="./<%= (encodeURIComponent((dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path))) + (dir[i].stats.isDirectory()?"/":"") %>"><%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) %></a>
 		</div>
 		<%
 		}
 		if (media_type == "audio") { %>
 			<div class="playlist" id="playlist_modal">
-				<div style="border-bottom: 1px solid rgb(206, 199, 199); margin: 15px;"><b>Playlist</b></div>
-				<div style="margin: 10px" id="playlist_modal_content">Content</div>
+				<div style="border-bottom: 1px solid rgb(206, 199, 199); margin: 15px;"><b>Playlist</b><button type="button" class="btn btn-primary btn-sm" onclick="play_playlist();" style="margin-left: 125px; margin-bottom: 10px">Play</button>
+				</div>
+				<div style="margin: 10px" id="playlist_modal_content">
+				<% if (playlist != null) {
+					for (var i in playlist.track) { %>
+					<div class="playlist_item"><span class='glyphicon glyphicon-music'></span>&nbsp;<%= decodeURI(playlist.track[i].title) %></div>
+				<% 	} 
+				} %>
+				</div>
 			</div>
 		<% }
 	%>

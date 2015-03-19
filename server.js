@@ -11,6 +11,40 @@ var seriesInfos = Array();
 var searchingResults = Array();
 var playlists = Array();
 var jspf = require('jspf');
+var extensions = {
+	"audio": {
+		".mp3": true,
+		".mp4": true,
+		".wav": true,
+		".aif": true,
+		".aifc": true,
+		".aiff": true
+	},
+	"video": {
+		".flv": true,
+		".f4v": true,
+		".f4p": true,
+		".mp4": true,
+		".asf": true,
+		".asr": true,
+		".asx": true,
+		".avi": true,
+		".mpa": true,
+		".mpe": true,
+		".mpeg": true,
+		".mpg": true,
+		".mpv2": true,
+		".mov": true,
+		".movie": true,
+		".mp2": true,
+		".qt": true,
+		".webm": true,
+		".ts": true,
+		".mkv": true,
+		".ogg": true
+	}
+};
+
 
 var loadServer = function () {
 	console.log(new Date() + " - Server: loading server configuration");
@@ -63,7 +97,7 @@ var loadServer = function () {
 		// req.url slice to the next char after /browse/
 		var path = req.url.slice(8);
 		var media_type = path.split("/")[0];
-	        readPathAndRespond(config.server_root_dir[media_type] + path.slice(media_type.length+1), media_type, res);
+	        readPathAndRespond(config.server_root_dir[media_type] + path.slice(media_type.length+1), media_type, req, res);
 	});
 
 	server.get('/tmdb_search/', function(req, res) {
@@ -143,7 +177,9 @@ var loadServer = function () {
 	});
 
 	server.get('/audio_player/*', function(req, res) {
-		console.log(new Date() + " - Server => deliverFile: " + req.url);
+		console.log(new Date() + " - Server => audio_player ");
+		if (playlists[req.connection.remoteAddress].getTitle() == "") playlists[req.connection.remoteAddress].setTitle("Anonymous Playlist");
+                return res.render('audio.ejs', {playlist: playlists[req.connection.remoteAddress], server_config: config});
 	});
 
 	server.get('/streaming/*', function (req, res) {
@@ -167,6 +203,7 @@ var loadServer = function () {
 		if (!playlists[req.connection.remoteAddress]) playlists[req.connection.remoteAddress] = new jspf.Jspf();
 		var t = new jspf.Track();
 		t.setLocation(params['location']);
+		t.setTitle(params['location'].slice(params['location'].lastIndexOf("/")+1, params['location'].lastIndexOf(".")));
 		playlists[req.connection.remoteAddress].pushTrack(t);
 		res.status(200);
 		res.setHeader('Content-type', 'application/json');
@@ -179,15 +216,16 @@ var loadServer = function () {
                 console.log(new Date() + " - Server => removeFromPlaylist: " + params['location']);
 		var t = new jspf.Track();
 		t.setLocation(params['location']);
-		playlists[req.connection.remoteAddress].removeTrack(t);
+		t.setTitle(params['location'].slice(params['location'].lastIndexOf("/")+1, params['location'].lastIndexOf(".")));
+		if (!playlists[req.connection.remoteAddress].removeTrack(t)) console.log(new Date() + " - Server => removeFromPlaylist: Unable to remove "+JSON.stringify(t));
 		res.status(200);
 		res.setHeader('Content-type', 'application/json');
 		res.write(playlists[req.connection.remoteAddress].toString());
 		res.end();
 	});
                                                                                                                 
-	var readPathAndRespond = function (path, media_type, res) {
-		 path = decodeURI(path);
+	var readPathAndRespond = function (path, media_type, req, res) {
+		 path = decodeURIComponent(path);
 		 console.log (new Date() + " - Server => Entering readPathAndRespond: path= "+path+" media_type= "+media_type);
 		 if (media_type != "video" && media_type != "audio") return sendNotFound(res);
 		 var fs = require('fs');
@@ -201,9 +239,9 @@ var loadServer = function () {
 		                		        res.end("Error Reading FS Content");
 			                	} else {
 			        	               	for (var i in files) {
-		        		               		files[i] = {"path": (path.slice(config.server_root_dir[media_type].length)?path.slice(config.server_root_dir[media_type].length)+"/"+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
+		        		               		files[i] = {"path": (path.slice(config.server_root_dir[media_type].length)?path.slice(config.server_root_dir[media_type].length)+files[i]:files[i]), "stats": fs.statSync(path+"/"+files[i])};
 		        		               	}
-		        	        	        res.render('browse.ejs', {dir: files, onRoot: (path!=config.server_root_dir[media_type]), server_config: config, media_type: media_type});
+		        	        	        res.render('browse.ejs', {dir: sortAndFilterFiles(files, media_type), onRoot: (path!=config.server_root_dir[media_type]), server_config: config, media_type: media_type, playlist: playlists[req.connection.remoteAddress]});
 			                	}
 		 			});
 	 			} else if (stats.isFile()) {
@@ -212,6 +250,18 @@ var loadServer = function () {
 		 		}
 		 	});
 		 } else sendNotFound(res);
+	}
+
+	var sortAndFilterFiles = function (files, media_type) {
+		var directories = Array();
+		var otherFiles = Array();
+		for (var i in files) {
+			if (files[i]["stats"].isDirectory()) directories.push(files[i]);
+			else if (extensions[media_type][files[i].path.slice(files[i].path.lastIndexOf(".")).toLowerCase()]) otherFiles.push(files[i]);
+		}
+		directories.sort();
+		otherFiles.sort();
+		return directories.concat(otherFiles);
 	}
 
 	var renderMovie = function(res, path) {
@@ -230,7 +280,13 @@ var loadServer = function () {
 	var renderAudio = function(res, path) {
 		var filename = (path.lastIndexOf("/")>0?path.slice(path.lastIndexOf("/")+1):path);
                 console.log(new Date() + " - Server => renderAudio: rendering " + filename);
-                res.render('audio.ejs', {path: path.replace(config.server_root_dir['audio'], '/streaming/audio/'), filename: filename, server_config: config});
+                var p = new jspf.Jspf();
+                p.setTitle(filename);
+		var t = new jspf.Track();
+		t.setLocation(path.slice(config.server_root_dir['audio'].length));
+		p.pushTrack(t);
+		console.log(JSON.stringify(p));
+                res.render('audio.ejs', {playlist: p, server_config: config});
 	}
 
 	var TMDB_SEARCH = function(filename, word_list, nbWord, res) {
@@ -365,6 +421,8 @@ var loadServer = function () {
 		}
 	}
 
+	server.use('/views/img', express.static(__dirname + "/views/img"));
+	
 	server.use(function(req, res, next) {
 		sendNotFound(res);
 	});
