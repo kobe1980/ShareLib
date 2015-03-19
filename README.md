@@ -18,11 +18,13 @@ This version is a branch from Raqqa [tmdbv3] (https://github.com/raqqa/node-tmdb
 
 [ejs] (https://github.com/mde/ejs.git)
 
-[vid-streamer] (https://github.com/meloncholy/vid-streamer.git)
-
-[serve-favicon] (https://github.com/expressjs/serve-favicon.git)
+[sharelib-streamer] 
 
 [sharelib-digest]
+
+[sharelib-tmdbv3]
+
+[serve-favicon] (https://github.com/expressjs/serve-favicon.git)
 
 ### Usage
 
