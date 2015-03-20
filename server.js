@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+var logger = require('./logger.js');
 var express = require('express');
 var url = require('url');
 var favicon = require('serve-favicon');
@@ -47,14 +47,14 @@ var extensions = {
 
 
 var loadServer = function () {
-	console.log(new Date() + " - Server: loading server configuration");
+	logger.log("Server", "loadServer", "loading server configuration");
 	if (!config["tmdb_key"] || config["tmdb_key"] == "") {
-		console.log("This server require a TMDB Key to work. If you need one, go to https://www.themoviedb.org/");
+		logger.log("Server", "loadServer", "This server require a TMDB Key to work. If you need one, go to https://www.themoviedb.org/");
 		return;
 	}
 	var tmdb=require('sharelib-tmdbv3').init(config["tmdb_key"], (config["tmdb_lang"]?config["tmdb_lang"]:"en"));
 	tmdb.on('error', function(msg) {
-		console.log(new Date() + " - Server => Error initializing TMDB: " + msg);
+		logger.log("Server", "loadServer", "Error initializing TMDB: " + msg);
 		process.exit();
 	});
 	var tmdb_config;
@@ -83,7 +83,7 @@ var loadServer = function () {
 	});
 
 	server.get('/open_viacertif/', function (req, res) {
-		console.log(new Date() + " - Server => open_viacertif");
+		logger.log("Server", "open_viacertif", "");
 		res.writeHead(200);
 		res.end("Access granted");
 	});
@@ -102,7 +102,7 @@ var loadServer = function () {
 
 	server.get('/tmdb_search/', function(req, res) {
 		var params = querystring.parse(url.parse(req.url).query);
-		console.log (new Date() + " - Server => tmdb_search: params "+JSON.stringify(params));
+		logger.log("Server", "tmdb_search", "tmdb_search: params "+JSON.stringify(params));
 
 		if (!params['video_type'] || !params['id']) {
 			return sendNotFound(res);
@@ -154,7 +154,7 @@ var loadServer = function () {
 				res.writeHead(200, {'Content-type': 'application/json'});
 				res.end('["' + stdout.replace(/\n/g, '","').substring(0,stdout.length-1).replace(new RegExp(config.server_root_dir[media_type],"g"), "") + '"]');
 			} else {
-				console.log(new Date() + " - Server => Search: Error" + error);
+				logger.log("Server", "search_query", "Search: Error" + error);
 			}
 		});
 	});
@@ -167,7 +167,7 @@ var loadServer = function () {
 	});
 
 	server.get('/tmdb_sample/', function(req, res) {
-		console.log (new Date() + " - Server => /tmdb_sample");
+		logger.log("Server", "tmdb_sample", "");
 		tmdb.search.multi("The Walking Dead", function(err, movie) {
 			res.setHeader('Content-Type', 'text/plain');
 			for (var i in movie) {
@@ -178,12 +178,12 @@ var loadServer = function () {
 	});
 
 	server.get('/video_player/*', function(req, res) {
-		console.log(new Date() + " - Server => deliverFile: " + req.url);
+		logger.log("Server", "video_player", " deliverFile: " + req.url);
 		return res.render('video_player.ejs', {path: req.url.replace('/video_player/','/streaming/video/'),  server_config: config});
 	});
 
 	server.get('/audio_player/*', function(req, res) {
-		console.log(new Date() + " - Server => audio_player ");
+		logger.log("Server", "audio_player", "");
 		if (playlists[req.connection.remoteAddress].getTitle() == "") playlists[req.connection.remoteAddress].setTitle("Anonymous Playlist");
                 return res.render('audio.ejs', {playlist: playlists[req.connection.remoteAddress], server_config: config});
 	});
@@ -192,11 +192,11 @@ var loadServer = function () {
 		var media_type = req.url.split("/")[2];
 		req.url = req.url.replace(media_type+"/", "");
 		var vidStreamer = require('sharelib-streamer');
-		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type);
+		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type, logger);
 	});
 	
 	server.get('/getCurrentPlaylist/', function(req, res) {
-		console.log(new Date() + " - Server => getCurrentPlaylist ");
+		logger.log("Server", "getCurrentPlaylist", "");
 		res.status(200);
 		res.setHeader('Content-type', 'application/json');
 		if (playlists[req.connection.remoteAddress] != null) res.write(playlists[req.connection.remoteAddress].toString());
@@ -205,7 +205,7 @@ var loadServer = function () {
 	
 	server.get('/addToPlaylist/', function(req, res) {
 		var params = querystring.parse(url.parse(req.url).query);
-		console.log(new Date() + " - Server => addToPlaylist: " + params['location']);
+		logger.log("Server", "addToPlaylist", params['location']);
 		if (!playlists[req.connection.remoteAddress]) playlists[req.connection.remoteAddress] = new jspf.Jspf();
 		var t = new jspf.Track();
 		t.setLocation(params['location']);
@@ -219,11 +219,12 @@ var loadServer = function () {
 	
 	server.get('/removeFromPlaylist/', function(req, res) {
 		var params = querystring.parse(url.parse(req.url).query);
-                console.log(new Date() + " - Server => removeFromPlaylist: " + params['location']);
+		logger.log("Server", "removeFromPlaylist", params['location']);
 		var t = new jspf.Track();
 		t.setLocation(params['location']);
 		t.setTitle(params['location'].slice(params['location'].lastIndexOf("/")+1, params['location'].lastIndexOf(".")));
-		if (!playlists[req.connection.remoteAddress].removeTrack(t)) console.log(new Date() + " - Server => removeFromPlaylist: Unable to remove "+JSON.stringify(t));
+		if (!playlists[req.connection.remoteAddress].removeTrack(t))
+			logger.log("Server", "removeFromPlaylist", "Unable to remove "+JSON.stringify(t));
 		res.status(200);
 		res.setHeader('Content-type', 'application/json');
 		res.write(playlists[req.connection.remoteAddress].toString());
@@ -231,8 +232,8 @@ var loadServer = function () {
 	});
                                                                                                                 
 	var readPathAndRespond = function (path, media_type, req, res) {
-		 path = decodeURIComponent(path);
-		 console.log (new Date() + " - Server => Entering readPathAndRespond: path= "+path+" media_type= "+media_type);
+		path = decodeURIComponent(path);
+		logger.log("Server", "readPathAndRespond", "Entering readPathAndRespond: path= "+path+" media_type= "+media_type);
 		 if (media_type != "video" && media_type != "audio") return sendNotFound(res);
 		 var fs = require('fs');
 		 if (fs.existsSync(path)) {
@@ -241,7 +242,7 @@ var loadServer = function () {
          			if (stats.isDirectory()) {
 			        	fs.readdir(path, function(err, files) {
 			        		if (err) {
-	        		       			console.log(new Date() + " - Server => readdir: Error reading dir "+ path);
+	        		       			logger.log("Server", "readPathAndRespond", "readdir: Error reading dir "+ path);
 		                		        res.end("Error Reading FS Content");
 			                	} else {
 			        	               	for (var i in files) {
@@ -272,7 +273,7 @@ var loadServer = function () {
 
 	var renderMovie = function(res, path) {
 		var filename = (path.lastIndexOf("/")>0?path.slice(path.lastIndexOf("/")+1):path);
-		console.log(new Date() + " - Server => renderMovie: trying to find " + filename + " on TMDB");
+		logger.log("Server", "renderMovie", "trying to find " + filename + " on TMDB");
 		searchingResults[filename]=Array();
 		searchingResults[filename]['found']=false;
 		searchingResults[filename]['nbtries']=0;
@@ -285,7 +286,7 @@ var loadServer = function () {
 	
 	var renderAudio = function(res, path) {
 		var filename = (path.lastIndexOf("/")>0?path.slice(path.lastIndexOf("/")+1):path);
-                console.log(new Date() + " - Server => renderAudio: rendering " + filename);
+                logger.log("Server", "renderAudio", "rendering " + filename);
                 var p = new jspf.Jspf();
                 p.setTitle(filename);
 		var t = new jspf.Track();
@@ -296,15 +297,15 @@ var loadServer = function () {
 	}
 
 	var TMDB_SEARCH = function(filename, word_list, nbWord, res) {
-		console.log(new Date() + " - Server => TMDB_SEARCH: nbWord = "+nbWord+" resultFound: "+searchingResults[filename]['found']);
+		logger.log("Server", "TMDB_SEARCH", "nbWord = "+nbWord+" resultFound: "+searchingResults[filename]['found']);
 		var title = "";
 		for (var i=0;i<nbWord;i++) {
 			title += " " + word_list[i];
 		}
-		console.log(new Date() + " - Server => TMDB_SEARCH: searching for : "+title);
+		logger.log("Server", "TMDB_SEARCH", "searching for : "+title);
 		tmdb.search.multi(title, function(err, movie) {
 			if (movie.total_results>0) {
-				console.log(new Date() + " - Server => TMDB_SEARCH: Found a result for :"+ title);
+				logger.log("Server", "TMDB_SEARCH", "Found a result for :"+ title);
 				nextSearchResult(filename, word_list, res, true);
 				return renderMovieCallback(res, movie.results[0], filename);
 			} else {
@@ -314,7 +315,7 @@ var loadServer = function () {
 	}
 
 	var nextSearchResult = function(filename, word_list, res, resultFound) {
-		console.log(new Date() + " - Server => nextSearchResult: searching for : "+filename+" resultFound = "+resultFound+" nbWord = "+word_list.length+" nbTries = "+searchingResults[filename]['nbtries']);
+		logger.log("Server", "nextSearchResult", "searching for : "+filename+" resultFound = "+resultFound+" nbWord = "+word_list.length+" nbTries = "+searchingResults[filename]['nbtries']);
 		searchingResults[filename]['nbtries']++;
 		if (searchingResults[filename]['nbtries'] >= word_list.length) {
 			if (! searchingResults[filename]['found']) {
@@ -327,7 +328,7 @@ var loadServer = function () {
 	}
 
 	var unableToRenderMovie = function(res, word_list, filename) {
-		console.log(new Date() + " - Server => unableToRenderMovie: "+filename);
+		logger.log("Server", "unableToRenderMovie", filename);
 		var full_name="";
 		for (var i=0;i<word_list.length;i++) {
 			full_name += " " + word_list[i];
@@ -336,7 +337,7 @@ var loadServer = function () {
 	}
 
 	var renderMovieCallback = function (res, search_result, filename) {
-		console.log(new Date() + " - Server => renderMovieCallback: "+ filename + " render Already done: "+(searchingResults[filename] && searchingResults[filename]['found']));
+		logger.log("Server", "renderMovieCallback", filename + " render Already done: "+(searchingResults[filename] && searchingResults[filename]['found']));
 		if (searchingResults[filename] && searchingResults[filename]['found'] || !(searchingResults[filename])) return false;
 		if (search_result) {
 	 		if (searchingResults[filename]) searchingResults[filename]['found'] = true;
@@ -368,7 +369,7 @@ var loadServer = function () {
 	}
 
 	var renderSerie = function(serie_infos, season_infos, episode_images, res, search_result, filename, saison_episode) {
-		console.log(new Date() + " - Server => renderSerie: "+ filename + " " + (serie_infos?" serie infos available":"") + (season_infos?" season infos available":""));
+		logger.log("Server", "renderSerie", filename + " " + (serie_infos?" serie infos available":"") + (season_infos?" season infos available":""));
 		if (serie_infos) { seriesInfos[filename][0] = serie_infos; }
 		if (season_infos) { seriesInfos[filename][1] = season_infos; }
 		if (episode_images) {seriesInfos[filename][2].images = episode_images; }
@@ -411,13 +412,13 @@ var loadServer = function () {
 		var fs = require('fs');
 		if (config["access_log"] && config["access_log"] != "") {
 			fs.open(config["access_log"], 'a', function(err, fd) {
-			        if (err) console.log(new Date() + " - Server => accesslog_open : Error while opening access_log file. Err = " + JSON.stringify(err));
+			        if (err) logger.log("Server", "accesslog_open", "Error while opening access_log file. Err = " + JSON.stringify(err));
 		        	else {
 		        		var buf = new Buffer(log+"\n");
 			        	fs.write(fd, buf, 0, buf.length, -1, function(err, written, string) {
-			        		if(err)  console.log(new Date() + " - Server => access_log.write : Error while writing log to file. Err = " + JSON.stringify(err));
+			        		if(err)  logger.log("Server", "access_log.write", "Error while writing log to file. Err = " + JSON.stringify(err));
 			        		fs.close(fd, function(err){
-		        				if(err)  console.log(new Date() + " - Server => access_log.close file : Error while closing log to file. Err = " + JSON.stringify(err));
+		        				if(err)  logger.log("Server", "access_log.close file", "Error while closing log to file. Err = " + JSON.stringify(err));
 		        			});
 				        });
 				}
@@ -434,16 +435,20 @@ var loadServer = function () {
 	});
 
 	server.listen(config.server_port);
-	console.log(new Date() + " - Server => configuration loaded.");
+	logger.log("Server", "", "configuration loaded.");
 }
 
-console.log(new Date() + " - Starting Server.");
-var security;
-if (config["security_activated"]) {
-	console.log(new Date() + " - Starting Server. Security activated");
-	var init = require(config["security_class"]).init(function(secu) {
-		console.log(new Date() + " - Server: Security initialisation done");
-		security = secu;
-		loadServer();
-	});
-} else loadServer();
+var art = require('ascii-art');
+art.font("Sharelib", "Doom", function(rendered) {
+	console.log(rendered);
+	logger.log("Server", "", "Starting Server.");
+	var security;
+	if (config["security_activated"]) {
+		logger.log("Server", "", "Starting Server. Security activated");
+		var init = require(config["security_class"]).init(logger, function(secu) {
+			logger.log("Server", "", "Security initialisation done");
+			security = secu;
+			loadServer();
+		});
+	} else loadServer();
+});
