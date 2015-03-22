@@ -1,6 +1,6 @@
 {
 	"name": "sharelib",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"description": "a secured mediacenter for Synology's NAS. Allow you to browse, have nice description from TMDB and share your contents",
 	"author": "kobe1980 <kobe1980@gmail.com>",
 	"bin": {
@@ -16,6 +16,7 @@
 		"sharelib-streamer": "0.0.2",
 		"jspf": "0.0.3",
 		"ascii-art": "0.0.2-alpha",
+		"upnp-ssdp": "0.0.2",
 		"cli-color": "0.3.3"
 	},
 	"scripts": {

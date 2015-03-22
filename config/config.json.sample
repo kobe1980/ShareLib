@@ -19,6 +19,7 @@
 	"security_reject_function": "rejectRequest",
 	"authentication_page": "authent.ejs",
 	"tmdb_key": "69aba1d2d792945cc40",
-	"vid_streamer_path": "./config/vid-streamer.json",
-	"tmdb_lang": "fr"
+	"tmdb_lang": "fr",
+	"sharelib_streamer_config_path": "./config/vid-streamer.json",
+	"use_IGD": true
 }

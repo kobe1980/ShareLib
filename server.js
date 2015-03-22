@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var logger = require('./logger.js');
+var security;
 var express = require('express');
 var url = require('url');
 var favicon = require('serve-favicon');
@@ -11,6 +12,8 @@ var seriesInfos = Array();
 var searchingResults = Array();
 var playlists = Array();
 var jspf = require('jspf');
+var Ssdp = require('upnp-ssdp');
+
 var extensions = {
 	"audio": {
 		".mp3": true,
@@ -192,7 +195,7 @@ var loadServer = function () {
 		var media_type = req.url.split("/")[2];
 		req.url = req.url.replace(media_type+"/", "");
 		var vidStreamer = require('sharelib-streamer');
-		vidStreamer(req, res, __dirname + "/" + (config.vid_streamer_path.substr(0,2) == "./"?config.vid_streamer_path.slice(2):config.vid_streamer_path), media_type, logger);
+		vidStreamer(req, res, __dirname + "/" + (config.sharelib_streamer_config_path.substr(0,2) == "./"?config.sharelib_streamer_config_path.slice(2):config.sharelib_streamer_config_path), media_type, logger);
 	});
 	
 	server.get('/getCurrentPlaylist/', function(req, res) {
@@ -439,10 +442,94 @@ var loadServer = function () {
 }
 
 var art = require('ascii-art');
+var client = new Ssdp();
+var wanService;
+var addPortMappingAction;
+var deletePortMappingAction;
+var setTimeoutId;
+
+client.on('up', function (address) {
+	logger.log("Server", "", "server found with config at" + address);
+        var tr=require("tr-064");
+        var tr064 = new tr.TR064();
+        tr064.initIGDDeviceByURL(address,function(err,device){
+       		if(!err){
+       			logger.log("Server", "", "Found IGD. Let's try to open Port and remove timeout.");
+	        	parseIGDDevice(device);
+		}
+        });
+});
+client.on('down', function (address) {
+	logger.log("Server", "", "Upnp server " + address + " not responding anymore");
+});
+client.on('error', function (err) {
+	logger.log("Server", "", "Error initiating SSDP search: "+ err)
+});
+
+process.on('SIGINT', function() {
+  	if (deletePortMappingAction) {
+  		wanService._callAction(deletePortMappingAction.name, [], [], {
+  			"NewRemoteHost": "",
+  			"NewExternalPort": config.server_port,
+  			"NewProtocol": "TCP"},  function(err, value) {
+  			if (err) logger.log("Server", "", "Fail to close external port");
+  			else logger.log("Server", "", "External port closed");
+		  	process.exit();
+  		});
+  	} else {
+  		process.exit();
+  	}
+});
+
+var parseIGDDevice=function(device){
+	logger.log("Server", "", "Upnp IGD Found: "+device.meta.friendlyName);
+        device.meta.servicesInfo.forEach(function(serviceType){
+        	var service=device.services[serviceType];
+        	if (service.meta.serviceType == "urn:schemas-upnp-org:service:WANIPConnection:1") {
+        		logger.log("Server", "", "Found Expected Service: WANIPConnection");
+                	wanService = service;
+                	service.meta.actionsInfo.forEach(function(action){
+                		if (action.name == "AddPortMapping") {
+                			logger.log("Server", "", "Found Action AddPortMapping. Using action to open external port");
+                        		addPortMappingAction = action;
+                                	service._callAction(action.name, [], [], {
+                                        	"NewRemoteHost": "",
+	                                        "NewExternalPort": config.server_port,
+        	                                "NewProtocol": "TCP",
+                	                        "NewInternalPort": config.server_port,
+                        	                "NewInternalClient": "192.168.1.98",
+                                	        "NewEnabled": true,
+                                        	"NewPortMappingDescription": "Sharelib",
+	                                        "NewLeaseDuration": 3600000}, 
+        	                       function(err, value) {
+                	                        if (err) {
+                	                        	logger.log("Server", "", "Impossible to open port. Err:"+err);
+                	                        } else {
+                	                        	logger.log("Server", "", "Port opened. "+JSON.stringify(value));
+				       			clearTimeout(setTimeoutId);
+                	                        	startServer(false);
+                	                        }
+                        	       });
+                       		}
+                       		if (action.name == "DeletePortMapping") {
+                               		logger.log("Server", "", "Found Action DeletePortMapping");
+	                               	deletePortMappingAction = action;
+                      		}
+			});
+		}
+	});
+}
+
 art.font("Sharelib", "Doom", function(rendered) {
 	console.log(rendered);
-	logger.log("Server", "", "Starting Server.");
-	var security;
+	if (config.use_IGD) {
+		client.search('urn:schemas-upnp-org:device:InternetGatewayDevice:1');
+		setTimeoutId = setTimeout(startServer, 10000, true);
+	} else startServer(true);
+});	
+
+function startServer(timeout) {
+	logger.log("Server", "", "Starting Server."+(timeout?" External Port Not Opened":" External Port Opened"));
 	if (config["security_activated"]) {
 		logger.log("Server", "", "Starting Server. Security activated");
 		var init = require(config["security_class"]).init(logger, function(secu) {
@@ -451,4 +538,4 @@ art.font("Sharelib", "Doom", function(rendered) {
 			loadServer();
 		});
 	} else loadServer();
-});
+}
