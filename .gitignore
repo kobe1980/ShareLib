@@ -30,6 +30,8 @@ build/Release
 # Config
 config/config.json
 config/vid-streamer.json
+config/digest.key.json
+config/key.jpg
 
 # Digest Private key
 node_modules/digest/config/digest.key.json

@@ -41,21 +41,17 @@
 		}	
 	</style>
 	<script language="Javascript">
-		
-		function addToPlaylist(input) {
+		var timeoutHandler;
+		function addToPlaylist(input, refresh) {
+			if (refresh == null) refresh = true;
+			if (timeoutHandler) {clearTimeout(timeoutHandler); timeoutHandler = null;}
 			document.getElementById('playlist_modal').style.display='inline';
 			document.getElementById('playlist_modal').style.opacity=100;
 			var xhr = new XMLHttpRequest();
-			var url = (input.checked?"/addToPlaylist/":"/removeFromPlaylist/")+"?location="+encodeURIComponent(input.value);
+			var url = (input.checked?"/addToPlaylist/":"/removeFromPlaylist/")+"?location="+encodeURIComponent(input.value)+"&refresh="+refresh;
 			xhr.onreadystatechange=function() {
 				if (xhr.readyState == 4 && xhr.status == 200) {
-			        	var pl = JSON.parse(xhr.responseText);
-		        		document.getElementById("playlist_modal_content").innerHTML = "";
-			        	if (pl!=null && pl.track.length > 0) {
-			        		for (var i in pl.track) {
-							document.getElementById("playlist_modal_content").innerHTML += "<div class='playlist_item'><span class='glyphicon glyphicon-music'></span>&nbsp;"+decodeURI(pl.track[i].title)+"</div>";
-						}
-					}
+			        	if (refresh) setPlaylistContent(xhr.responseText);
 			        }
 			}
 			xhr.open("GET", url, true);
@@ -64,7 +60,71 @@
 		}
 		
 		function play_playlist () {
-			window.location="<%= "http://"+server_config.server_external_address+":"+server_config.server_port+"/audio_player/"  %>";
+			window.location="<%= "http://"+server_config.server_external_address+":"+server_config.server_port+"/audio_player/" %>";
+		}
+		
+		function addAll() {
+			if (timeoutHandler) {clearTimeout(timeoutHandler); timeoutHandler = null;}
+			var collection = document.getElementsByTagName("input");
+			for (var i=0;i<collection.length;i++) {
+				if (collection[i].type=='checkbox') {
+					collection[i].checked = true;
+					addToPlaylist(collection[i], false);
+				}
+			}
+			refreshPlaylistContent();
+		}
+		
+		function setPlaylistContent(textContent) {
+			var pl = JSON.parse(textContent);
+			document.getElementById("playlist_modal_content").innerHTML = "";
+			if (pl!=null) {
+				if (pl.track.length > 0) {
+					for (var i in pl.track) {
+			        		document.getElementById("playlist_modal_content").innerHTML += "<div class='playlist_item'><span class='glyphicon glyphicon-music'></span>&nbsp;"+decodeURI(pl.track[i].title)+"</div>";
+			        	}
+			        } else {
+					timeoutHandler = setTimeout(function() {document.getElementById("playlist_modal").style.display="none";}, 5000);
+			        }
+			}
+		}
+		
+		function refreshPlaylistContent() {
+			var xhr = new XMLHttpRequest();
+			var url = "/getPlaylistContent/";
+			xhr.onreadystatechange=function() {
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					setPlaylistContent(xhr.responseText);	
+				}
+			}
+			xhr.open("GET", url, true);
+			xhr.send();
+			return true;
+		}
+		
+		function uncheckAll() {
+			var collection = document.getElementsByTagName("input");
+			for (var i=0;i<collection.length;i++) {
+				if (collection[i].type=='checkbox') {
+			        	collection[i].checked = false;
+			        }
+                        }
+		}
+		
+		function empty_playlist() {
+			if (timeoutHandler) {clearTimeout(timeoutHandler); timeoutHandler = null;}
+			var xhr = new XMLHttpRequest();
+			var url = "/emptyPlaylist/";
+			xhr.onreadystatechange=function() {
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					uncheckAll();
+					document.getElementById("playlist_modal_content").innerHTML = "";
+					timeoutHandler = setTimeout(function() {document.getElementById("playlist_modal").style.display="none";}, 5000);
+				}
+			}
+			xhr.open("GET", url, true);
+			xhr.send();
+			return true;
 		}
 	</script>
 	</head>
@@ -78,26 +138,28 @@
 		</ul>
 		<h1>Bienvenue sur DSKro</h1>
 		<% if (media_type == "audio") { %>
-			<div>S&eacute;lectionnez les contenus &agrave; ajouter &agrave;  la playlist.</div>
-		<% }
-		if (dir.length > 1) {%><h3>Voici la liste des <%= dir.length %> contenus:</h3>
-		<% } else if (dir.length == 1) { %><h3>Voici l'unique contenu trouv&eacute;:</h3>
-		<% }
-		if (onRoot) { 
+			<div>S&eacute;lectionnez les contenus &agrave; ajouter &agrave;  la playlist.<br />Vous pouvez aussi ajouter tous les fichers: <span><button type='button' class='btn btn-primary' onclick='addAll()'>Tous</button></span></div>
+		<% } %>
+		<% if (dir.length > 1) { %>
+			<h3>Voici la liste des <%= dir.length %> contenus:</h3>
+		<% } else { %>
+			<h3>Voici l'unique contenu trouv&eacute;:</h3>
+		<% } %>
+		<% if (onRoot) { 
 			var href =  "http://"+server_config.server_external_address+":"+server_config.server_port+"/browse/"+media_type+"/";
 			var splittedPath = dir[0].path.split("/");
 			for (var i=0; i<splittedPath.length-2;i++) {
 				href += splittedPath[i]+"/";
-			}
-		%>
+			} %>
 		<div>
 			<span class="glyphicon glyphicon-folder-open"></span>
 			<span class="spacer">&nbsp;</span>
 			<a href="<%= href %>">..</a>
 		</div>
-		<% }
+		<% } %> 
+		<% 
 		var stringToParse = '{';
-		if (playlist != null) {
+		if (playlist != null && playlist.track!= null && playlist.track.length > 0) {
 			for (var i in playlist.track) {
 				stringToParse+='"'+playlist.track[i].location+'": true,';
 			}
@@ -118,11 +180,13 @@
 			<span class="spacer">&nbsp;</span>
 			<a href="./<%= (encodeURIComponent((dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path))) + (dir[i].stats.isDirectory()?"/":"") %>"><%= (dir[i].path.lastIndexOf("/")>0?dir[i].path.slice(dir[i].path.lastIndexOf("/")+1):dir[i].path) %></a>
 		</div>
-		<%
-		}
+		<% }
 		if (media_type == "audio") { %>
 			<div class="playlist" id="playlist_modal">
-				<div style="border-bottom: 1px solid rgb(206, 199, 199); margin: 15px;"><b>Playlist</b><button type="button" class="btn btn-primary btn-sm" onclick="play_playlist();" style="margin-left: 125px; margin-bottom: 10px">Play</button>
+				<div style="border-bottom: 1px solid rgb(206, 199, 199); margin: 15px;">
+					<b>Playlist</b>
+					<button type="button" class="btn btn-primary btn-sm" onclick="empty_playlist();" style="margin-left: 65px; margin-bottom: 10px">Vider</button>
+					<button type="button" class="btn btn-primary btn-sm" onclick="play_playlist();" style="margin-bottom: 10px">Play</button>
 				</div>
 				<div style="margin: 10px" id="playlist_modal_content">
 				<% if (playlist != null) {

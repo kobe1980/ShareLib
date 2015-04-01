@@ -233,6 +233,21 @@ var loadServer = function () {
 		res.write(playlists[req.connection.remoteAddress].toString());
 		res.end();
 	});
+	
+	server.get('/emptyPlaylist/', function(req, res) {
+		playlists[req.connection.remoteAddress].track = Array();
+		res.status(200);
+                res.setHeader('Content-type', 'application/json');
+                res.write(playlists[req.connection.remoteAddress].toString());
+                res.end();
+	});
+	
+	server.get('/getPlaylistContent/', function(req, res) {
+		res.status(200);
+                res.setHeader('Content-type', 'application/json');
+                res.write(playlists[req.connection.remoteAddress].toString());
+                res.end();
+	});
                                                                                                                 
 	var readPathAndRespond = function (path, media_type, req, res) {
 		path = decodeURIComponent(path);
@@ -532,7 +547,7 @@ function startServer(timeout) {
 	logger.log("Server", "", "Starting Server."+(timeout?" External Port Not Opened":" External Port Opened"));
 	if (config["security_activated"]) {
 		logger.log("Server", "", "Starting Server. Security activated");
-		var init = require(config["security_class"]).init(logger, function(secu) {
+		var init =  new require(config["security_class"]).init(require("path").join(__dirname, config.security_config_path), logger, function(secu) {
 			logger.log("Server", "", "Security initialisation done");
 			security = secu;
 			loadServer();
